@@ -1,0 +1,23 @@
+@startuml
+title Player Wants to attack Enemy NPC
+actor Player
+actor EnemyNPC
+
+rectangle Project_Lapis {
+    usecase "Attack Enemy" as UCAttack
+    usecase "In Range" as UCInRange
+    usecase "Receive Damage" as UCDamage
+    usecase "Stagger Damage" as UCStagger
+    usecase "Stagger Check" as UCSCheck
+}
+
+
+Player -- UCAttack
+UCAttack ..> UCInRange: <<evokes>>
+UCInRange ..> UCDamage: <<evokes>>
+UCDamage ..> UCStagger: <<evokes>>
+UCStagger ..> UCSCheck: <<evokes>>
+EnemyNPC -- UCStagger
+EnemyNPC -- UCSCheck
+EnemyNPC -- UCDamage
+@enduml
