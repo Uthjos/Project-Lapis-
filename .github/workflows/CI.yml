@@ -39,7 +39,8 @@ jobs:
   python-dependencies:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@4
+        - name: Check out code
+          uses: actions/checkout@4
 
         - uses: actions/setup-python@v5
           with:
