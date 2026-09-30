@@ -16,6 +16,6 @@ def test_pygame_init_and_display():
 
 def test_surface_and_rect():
     surface = pygame.Surface((100,100))
-    rect = pygame.Rect()
+    rect = surface.get_rect()
     assert rect.width == 100
     assert rect.height == 100
