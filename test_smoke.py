@@ -5,7 +5,7 @@ os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 
 import pygame
 
-def test_pygame imports():
+def test_pygame_imports():
     assert pygame.version.ver
 
 def test_pygame_init_and_display():
