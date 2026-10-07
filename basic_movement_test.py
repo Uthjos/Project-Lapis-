@@ -1,5 +1,3 @@
-from typing import dataclass_transform
-
 import pygame
 
 from src.object_class.Character import Character
