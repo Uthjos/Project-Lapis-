@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """ A multithreaded chat client """
 
-import sys, socket, threading
+import socket
+import sys
+import threading
 from ipaddress import ip_address
-import json
 
 
 def post_gamesave():
@@ -11,13 +12,15 @@ def post_gamesave():
     print('post gamesave')
 
 def login(user, password):
+    """
     message = {
         "type": "command",
         "command": "login",
         "username": user,
         "password": password
     }
-    encoded_message = json.dumps(message).encode('utf-8')
+    #encoded_message = json.dumps(message).encode('utf-8')
+    """
 
 
 def print_help():
@@ -49,7 +52,7 @@ def handle_input(sock):
         while not msg:
             try:
                 recvd = sock.recv(1024)
-            except (socket.error, ConnectionError) as e:
+            except (OSError, ConnectionError) as e:
                 print(f'Connection error {e}')
                 sock.close()
                 break
@@ -61,7 +64,7 @@ if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((HOST, PORT))
-    except socket.error as e:
+    except OSError as e:
         print(e)
         sys.exit(1)
     print(f'Connected to {HOST}:{PORT}')
