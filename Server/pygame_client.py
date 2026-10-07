@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """ A multithreaded chat client """
 
 import socket
