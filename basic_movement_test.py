@@ -42,12 +42,6 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Press SPACE to attack
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    attacking = True
-                    attack_timer = ATTCK_DURATION
-
 
         # checks which movement keys are being pressed
         keys = pygame.key.get_pressed()
@@ -64,8 +58,14 @@ def main():
         if keys[pygame.K_d]:
             player.move(PLAYER_SPEED, 0)
 
+        if keys[pygame.K_SPACE]:
+            attacking = True
+            attack_timer = ATTCK_DURATION
+
         if attacking:
             attack_timer -= dt
+
+
 
             if attack_timer <= 0:
                 attacking = False
