@@ -174,6 +174,7 @@ Model ..> ItemFactory
 Character --|> SpriteEntity
 Character --> CharacterMovement
 Character --> Modifiers
+Character --> Inventory
 
 
 NPC --|> SpriteEntity
@@ -183,7 +184,6 @@ SpriteEntity --> AnimationAttack
 SpriteEntity --> AnimationStack
 SpriteEntity --> Armor
 SpriteEntity --> AttackSequence
-SpriteEntity --> Inventory
 
 
 Shop --> Inventory
