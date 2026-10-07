@@ -1,4 +1,6 @@
 import json
+
+
 class Parser:
 
     # acts as an initializer as this class does not have stored data
