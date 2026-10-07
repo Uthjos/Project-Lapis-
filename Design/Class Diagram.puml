@@ -27,17 +27,18 @@ class AnimationStack {
 }
 
 class Character {
-    +x
-    +y
-    +health
+    + x
+    + y
+    + health
+    - Inventory
 
-    +move(x, y)
-    +take_damage(damage)
-    +is_alive()
+    + move(x, y)
+    + take_damage(damage)
+    + is_alive()
 }
 
 class NPC {
-
+    - dropTable
 }
 
 class AnimationEditor{
@@ -48,7 +49,7 @@ class ItemEditor {
 
 }
 
-class Inventory {
+abstract class Inventory {
 
 }
 
@@ -174,7 +175,7 @@ Model ..> ItemFactory
 Character --|> SpriteEntity
 Character --> CharacterMovement
 Character --> Modifiers
-Character --> Inventory
+Character --|> Inventory
 
 
 NPC --|> SpriteEntity
@@ -186,9 +187,9 @@ SpriteEntity --> Armor
 SpriteEntity --> AttackSequence
 
 
-Shop --> Inventory
+Shop --|> Inventory
 
-Chests --> Inventory
+Chests --|> Inventory
 
 ExporterFactory ..> ExportItem
 ExporterFactory ..> ExportAnimation
