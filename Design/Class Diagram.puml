@@ -16,7 +16,13 @@ class Animation_Stack {
 }
 
 class Character {
+    +x
+    +y
+    +health
 
+    +move(x, y)
+    +take_damage(damage)
+    +is_alive()
 }
 
 class NPC {
@@ -63,10 +69,9 @@ class Exporter {
 
 }
 
-class Paser {
-
+class Parser {
+    +parse_file(file_path)
 }
-
 
 
 View --> View_Model
