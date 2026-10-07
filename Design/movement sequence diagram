@@ -1,0 +1,23 @@
+@startuml
+
+actor Player
+participant "Pygame Input" as Input
+participant "Game Loop" as GameLoop
+participant Character
+participant "Pygame Display" as Display
+
+Player -> Input : Press W/A/S/D
+Input -> GameLoop : Movement key detected
+
+GameLoop -> Character : move(x, y)
+activate Character
+
+Character -> Character : Update x and y position
+
+Character --> GameLoop : Updated position
+deactivate Character
+
+GameLoop -> Display : Draw player at x, y
+Display --> Player : Show updated player position
+
+@enduml
