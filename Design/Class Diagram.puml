@@ -11,20 +11,38 @@ class View{
 }
 
 class ViewModel {
-
+    + handleInput()
+    + updateView()
+    + updateModel()
+    + openEditor()
 }
 
 class Model {
+    + gameState
+    + currentStage
 
+    + updateGame()
+    + loadGame()
+    + saveGame()
 }
 
-class EditorModel{
+class EditorModel {
+    + currentItem
+    + currentAnimation
 
+    + createItem()
+    + editItem()
+    + createAnimation()
+    + editAnimation()
 }
 
 class AnimationStack {
-
+    - animations
+    + addAnimation(animation)
+    + playAnimation()
+    + stopAnimation()
 }
+
 
 class Character {
     + x
@@ -45,104 +63,158 @@ class AnimationEditor{
 
 }
 
-class ItemEditor {
-
+class ItemFactory {
+    + createItem(itemType)
 }
 
 abstract class Inventory {
-
+    - items
+    + addItem(item)
+    + removeItem(item)
+    + getItems()
 }
 
 class Shop {
-
+    - items
+    + buyItem(item)
+    + sellItem(item)
+    + displayItems()
 }
 
 class Chests {
-
+    - items
+    - isOpen
+    + openChest()
+    + getItems()
 }
 
-class ItemFactory {
 
+class ItemFactory {
+    + createItem(itemType)
 }
 
 class CharacterMovement {
-
+    + speed
+    + moveUp()
+    + moveDown()
+    + moveLeft()
+    + moveRight()
 }
 
 class EnemyAI {
-
+    + detectPlayer()
+    + moveTowardPlayer()
+    + chooseAction()
+    + attackPlayer()
 }
 
-class ExporterFactory {
 
+class ExporterFactory {
+    + createExporter(fileType)
+    + exportData()
 }
 
 class ParserFactory {
-
+    + createParser(fileType)
+    + parseData()
 }
 
 class AnimationAttack {
-
+    + playAttack()
+    + resetAttack()
 }
 
 class ExportAnimation {
-
+    + animationData
+    + fileName
+    + exportAnimation()
 }
 
 class ExportItem {
-
+    + exportItem()
 }
 
 class Stage {
-
+    + currentLevel
+    + loadStage()
+    + updateStage()
 }
 
 class IsoGrid {
-
+    + rows
+    + columns
+    + tileWidth
+    + tileHeight
 }
 
 class TileData {
-
+    + tileType
+    + walkable
+    + movementCost
+    + getTileType()
 }
 
 class Armor {
-
+    + defense
+    + durability
+    + equip()
+    + takeDamage(damage)
 }
 
 class SaveGame {
-
+    + saveGame()
+    + loadGame()
 }
 
 class Modifiers {
-
+    + modifierType
+    + duration
+    + applyModifier()
+    + removeModifier()
 }
 
-class AttackSequence {
 
+class AttackSequence {
+    + attack()
+    + calculateDamage()
 }
 
 class AOE {
 
 }
 
-class Melee{
-
+class Melee {
+    + damage
+    + attackRange
+    + attack()
 }
 
 class Range {
-
+    + damage
+    + attackRange
+    + ammo
+    + attack()
+    + reload()
 }
 
 class Defence {
-
+    + defenseValue
+    + durability
+    + defend()
 }
 
 abstract class SpriteEntity {
+    + x
+    + y
+    + sprite
+    + health
 
+    + update()
+    + render()
 }
 
 class ParseSave {
-
+    + parseSave()
 }
 
 class ParseAnimationJSON {
@@ -150,7 +222,9 @@ class ParseAnimationJSON {
 }
 
 abstract class Weapon {
-
+    + damage
+    + range
+    + attack()
 }
 
 View --> ViewModel
