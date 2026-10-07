@@ -1,6 +1,6 @@
 import pygame
-from src.object_class.Character import Character
 
+from src.object_class.Character import Character
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
