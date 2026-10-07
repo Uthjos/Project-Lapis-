@@ -64,10 +64,6 @@ class ItemFactory {
 
 }
 
-class WeaponFactory{
-
-}
-
 class CharacterMovement {
 
 }
@@ -164,7 +160,6 @@ EditorModel ..> ExporterFactory
 EditorModel ..> ParserFactory
 EditorModel --> ItemEditor
 EditorModel --> AnimationEditor
-EditorModel ..> WeaponFactory
 EditorModel ..> ItemFactory
 
 Model --> Stage
@@ -172,7 +167,6 @@ Model --> Character
 Model --> NPC
 Model --> SaveGame
 Model ..> ParserFactory
-Model ..> WeaponFactory
 Model --> Chests
 Model --> Shop
 Model ..> ItemFactory
@@ -199,7 +193,7 @@ Chests --> Inventory
 ExporterFactory ..> ExportItem
 ExporterFactory ..> ExportAnimation
 
-WeaponFactory ..> Weapon
+ItemFactory ..> Weapon
 
 Weapon --> Melee
 Weapon --> Range
