@@ -1,5 +1,4 @@
 import pygame
-
 from src.object_class.Character import Character
 
 
