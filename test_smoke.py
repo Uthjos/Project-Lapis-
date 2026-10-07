@@ -1,4 +1,5 @@
 import os
+
 import pygame
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
