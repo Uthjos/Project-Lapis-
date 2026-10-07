@@ -1,0 +1,76 @@
+@startuml
+class View{
+
+}
+
+class View_Model {
+
+}
+
+class Model {
+
+}
+
+class Animation_Stack {
+
+}
+
+class Character {
+
+}
+
+class NPC {
+
+}
+
+class Animation_Editor{
+
+}
+
+class Item_Editor {
+
+}
+
+class Inventory {
+
+}
+
+class Shop {
+
+}
+
+class Chests {
+
+}
+
+class Item {
+
+}
+
+class Weapon{
+
+}
+
+class Character_Movement {
+
+}
+
+class EnemyAI {
+
+}
+
+class Exporter {
+
+}
+
+class Paser {
+
+}
+
+
+
+View --> View_Model
+View_Model --> Model
+
+
+@enduml
