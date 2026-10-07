@@ -141,7 +141,13 @@ class ParseSave {
 
 }
 
-class ParseAnimationJSON
+class ParseAnimationJSON {
+
+}
+
+abstract class Weapon {
+
+}
 
 View --> ViewModel
 ViewModel --> Model
@@ -164,12 +170,12 @@ Model --> Chests
 Model --> Shop
 Model ..> ItemFactory
 
-Character --> SpriteEntity
+Character --|> SpriteEntity
 Character --> CharacterMovement
 Character --> Modifiers
 
 
-NPC --> SpriteEntity
+NPC --|> SpriteEntity
 NPC --> EnemyAI
 
 SpriteEntity --> AnimationAttack
@@ -186,10 +192,12 @@ Chests --> Inventory
 ExporterFactory ..> ExportItem
 ExporterFactory ..> ExportAnimation
 
-WeaponFactory --> Melee
-WeaponFactory --> Range
-WeaponFactory --> AOE
-WeaponFactory --> Defence
+WeaponFactory ..> Weapon
+
+Weapon --> Melee
+Weapon --> Range
+Weapon --> AOE
+Weapon --> Defence
 
 ParserFactory ..> ParseItemJSON
 ParserFactory ..> ParseAnimationJSON
