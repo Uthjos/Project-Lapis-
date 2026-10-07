@@ -15,8 +15,7 @@ class Character:
         self.health -= damage
 
         # health should not go below 0
-        if self.health < 0:
-            self.health = 0
+        self.health = max(self.health, 0)
 
     # checks if the character is still alive
     def is_alive(self):
