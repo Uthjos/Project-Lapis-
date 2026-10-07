@@ -27,17 +27,18 @@ class AnimationStack {
 }
 
 class Character {
-    +x
-    +y
-    +health
+    + x
+    + y
+    + health
+    - Inventory
 
-    +move(x, y)
-    +take_damage(damage)
-    +is_alive()
+    + move(x, y)
+    + take_damage(damage)
+    + is_alive()
 }
 
 class NPC {
-
+    - dropTable
 }
 
 class AnimationEditor{
@@ -48,7 +49,7 @@ class ItemEditor {
 
 }
 
-class Inventory {
+abstract class Inventory {
 
 }
 
@@ -61,10 +62,6 @@ class Chests {
 }
 
 class ItemFactory {
-
-}
-
-class WeaponFactory{
 
 }
 
@@ -164,7 +161,6 @@ EditorModel ..> ExporterFactory
 EditorModel ..> ParserFactory
 EditorModel --> ItemEditor
 EditorModel --> AnimationEditor
-EditorModel ..> WeaponFactory
 EditorModel ..> ItemFactory
 
 Model --> Stage
@@ -172,7 +168,6 @@ Model --> Character
 Model --> NPC
 Model --> SaveGame
 Model ..> ParserFactory
-Model ..> WeaponFactory
 Model --> Chests
 Model --> Shop
 Model ..> ItemFactory
@@ -180,6 +175,7 @@ Model ..> ItemFactory
 Character --|> SpriteEntity
 Character --> CharacterMovement
 Character --> Modifiers
+Character --|> Inventory
 
 
 NPC --|> SpriteEntity
@@ -189,17 +185,16 @@ SpriteEntity --> AnimationAttack
 SpriteEntity --> AnimationStack
 SpriteEntity --> Armor
 SpriteEntity --> AttackSequence
-SpriteEntity --> Inventory
 
 
-Shop --> Inventory
+Shop --|> Inventory
 
-Chests --> Inventory
+Chests --|> Inventory
 
 ExporterFactory ..> ExportItem
 ExporterFactory ..> ExportAnimation
 
-WeaponFactory ..> Weapon
+ItemFactory ..> Weapon
 
 Weapon --> Melee
 Weapon --> Range
