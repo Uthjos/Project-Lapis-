@@ -1,5 +1,6 @@
+import sys
+import threading
 from socket import *
-import sys,threading
 
 users={}
 
