@@ -1,0 +1,30 @@
+@startuml
+
+actor Player
+participant "Game Display" as Display
+participant Inventory
+participant ItemFactory
+participant Character
+
+Player -> Display : Open inventory
+Display -> Inventory : Request inventory items
+Inventory --> Display : Show available items
+
+Player -> Display : Select item to equip
+Display -> Inventory : Equip selected item
+
+Inventory -> ItemFactory : Get selected item
+ItemFactory --> Inventory : Return item
+
+Inventory -> Character : Equip item
+activate Character
+
+Character -> Character : Set item as equipped
+
+Character --> Inventory : Item equipped
+deactivate Character
+
+Inventory --> Display : Update equipped item
+Display --> Player : Show equipped item
+
+@enduml
