@@ -1,6 +1,13 @@
 @startuml
 class View{
-
+    + DisplayUI()
+    + DisplayEditor()
+    + DisplayMapLayer()
+    + DisplayInventory()
+    + DisplaySettings()
+    + DisplaySaveMenu()
+    + DisplaySprite()
+    + DisplayBackground()
 }
 
 class ViewModel {
