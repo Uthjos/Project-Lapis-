@@ -3,7 +3,7 @@ class View{
 
 }
 
-class View_Model {
+class ViewModel {
 
 }
 
@@ -11,29 +11,27 @@ class Model {
 
 }
 
-class Animation_Stack {
+class EditorModel{
+
+}
+
+class AnimationStack {
 
 }
 
 class Character {
-    +x
-    +y
-    +health
 
-    +move(x, y)
-    +take_damage(damage)
-    +is_alive()
 }
 
 class NPC {
 
 }
 
-class Animation_Editor{
+class AnimationEditor{
 
 }
 
-class Item_Editor {
+class ItemEditor {
 
 }
 
@@ -49,15 +47,15 @@ class Chests {
 
 }
 
-class Item {
+class ItemFactory {
 
 }
 
-class Weapon{
+class WeaponFactory{
 
 }
 
-class Character_Movement {
+class CharacterMovement {
 
 }
 
@@ -65,17 +63,129 @@ class EnemyAI {
 
 }
 
-class Exporter {
+class ExporterFactory {
 
 }
+
+class ParserFactory {
+
+}
+
+class AnimationAttack {
+
+}
+
+class ExportAnimation {
+
+}
+
+class ExportItem {
+
+}
+
+class Stage {
+
+}
+
+class IsoGrid {
+
+}
+
+class TileData {
+
+}
+
+class Armor {
 
 class Parser {
     +parse_file(file_path)
 }
 
+class SaveGame {
 
-View --> View_Model
-View_Model --> Model
+}
+
+class Modifiers {
+
+}
+
+class AttackSequence {
+
+}
+
+class AOE {
+
+}
+
+class Melee{
+
+}
+
+class Range {
+
+}
+
+class Defence {
+
+}
+
+abstract class SpriteEntity {
+
+}
+
+class ParseAnimationJSON
+
+View --> ViewModel
+ViewModel --> Model
+ViewModel --> EditorModel
+
+EditorModel ..> ExporterFactory
+EditorModel ..> ParserFactory
+EditorModel --> ItemEditor
+EditorModel --> AnimationEditor
+EditorModel ..> WeaponFactory
+EditorModel ..> ItemFactory
+
+Model --> Stage
+Model --> Character
+Model --> NPC
+Model --> SaveGame
+Model ..> ParserFactory
+Model ..> WeaponFactory
+Model --> Chests
+Model --> Shop
+Model ..> ItemFactory
+
+Character --> SpriteEntity
+Character --> CharacterMovement
+Character --> Modifiers
 
 
+NPC --> SpriteEntity
+NPC --> EnemyAI
+
+SpriteEntity --> AnimationAttack
+SpriteEntity --> AnimationStack
+SpriteEntity --> Armor
+SpriteEntity --> AttackSequence
+SpriteEntity --> Inventory
+
+
+Shop --> Inventory
+
+Chests --> Inventory
+
+ExporterFactory ..> ExportItem
+ExporterFactory ..> ExportAnimation
+
+WeaponFactory --> Melee
+WeaponFactory --> Range
+WeaponFactory --> AOE
+WeaponFactory --> Defence
+
+ParserFactory ..> ParseItemJSON
+ParserFactory ..> ParseAnimationJSON
+
+Stage --> IsoGrid
+Stage --> TileData
 @enduml
