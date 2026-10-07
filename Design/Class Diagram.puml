@@ -97,8 +97,6 @@ class TileData {
 
 class Armor {
 
-class Parser {
-    +parse_file(file_path)
 }
 
 class SaveGame {
@@ -130,6 +128,10 @@ class Defence {
 }
 
 abstract class SpriteEntity {
+
+}
+
+class ParseSave {
 
 }
 
@@ -185,6 +187,7 @@ WeaponFactory --> Defence
 
 ParserFactory ..> ParseItemJSON
 ParserFactory ..> ParseAnimationJSON
+ParserFactory ..> ParseSave
 
 Stage --> IsoGrid
 Stage --> TileData
