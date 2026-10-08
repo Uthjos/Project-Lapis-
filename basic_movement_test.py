@@ -92,8 +92,6 @@ def main():
             attacking = True
             attack_timer = ATTACK_DURATION
 
-        if keys[pygame.K_r]:
-            rotating = True
 
         if facing_right:
             current_image = player_image
