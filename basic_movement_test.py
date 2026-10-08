@@ -28,6 +28,9 @@ def main():
 
     player = Character(380, 280)
 
+    facing_right = True
+
+
     attacking = False
     attack_timer = 0
 
@@ -35,6 +38,8 @@ def main():
     while running:
         # Get teh time since the last frame
         dt = clock.tick(FPS)
+        current_image = player_image
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -52,19 +57,23 @@ def main():
 
         if keys[pygame.K_a]:
             player.move(-PLAYER_SPEED, 0)
+            facing_right = False
 
         if keys[pygame.K_d]:
             player.move(PLAYER_SPEED, 0)
+            facing_right = True
 
         if keys[pygame.K_SPACE]:
             attacking = True
             attack_timer = ATTCK_DURATION
 
+        if facing_right:
+            current_image = player_image
+        else:
+            current_image = pygame.transform.flip(player_image, True, False)
+
         if attacking:
             attack_timer -= dt
-
-
-
             if attack_timer <= 0:
                 attacking = False
 
@@ -74,14 +83,21 @@ def main():
             slash_rect = slash_image.get_rect()
 
             #Put slash to right of player
-            slash_rect.midleft = (
-                player.x + player_image.get_width() / 2,
-                player.y + player_image.get_height() // 2
-            )
-            screen.blit(slash_image, slash_rect)
+            if facing_right:
+                slash_rect.midleft = (
+                    player.x + player_image.get_width() / 2,
+                    player.y + player_image.get_height() // 2
+                )
+                screen.blit(slash_image, slash_rect)
+            else:
+                slash_rect.midright = (
+                    player.x + player_image.get_width() / 2,
+                    player.y + player_image.get_height() / 2
+                )
+                screen.blit(pygame.transform.flip(slash_image, True, False), slash_rect)
 
         # draws the player sprite at the character's current position
-        screen.blit(player_image, (player.x, player.y))
+        screen.blit(current_image, (player.x, player.y))
 
         pygame.display.flip()
         clock.tick(FPS)
