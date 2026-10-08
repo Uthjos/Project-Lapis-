@@ -11,6 +11,7 @@ class DirectoryPath(Enum):
     WEAPON = DATA_DIR / 'weapons'
     ANIMATION = DATA_DIR / 'animations'
     STAGE = DATA_DIR / 'stages'
+    # Test change by Majid
 
 
 
