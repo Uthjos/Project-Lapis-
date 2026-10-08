@@ -25,6 +25,7 @@ def main():
         "src/assets/sprites/torso_test.png"
     ).convert_alpha()
 
+    # load legs for animation
     leg_images = [
         pygame.image.load("src/assets/sprites/player_sprite_leg_run_reference_0001.png").convert_alpha(),
         pygame.image.load("src/assets/sprites/player_sprite_leg_run_reference_0002.png").convert_alpha(),
@@ -38,11 +39,14 @@ def main():
         "src/assets/actions/test_slash_reference.png"
     ).convert_alpha()
 
+
+
     player = Character(380, 280)
 
+    #making sure they are facing the right direction
     facing_right = True
 
-
+    # initialize attack
     attacking = False
     attack_timer = 0
 
@@ -57,7 +61,6 @@ def main():
         # Get teh time since the last frame
         dt = clock.tick(FPS)
         current_image = player_image
-
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -88,6 +91,9 @@ def main():
         if keys[pygame.K_SPACE]:
             attacking = True
             attack_timer = ATTACK_DURATION
+
+        if keys[pygame.K_r]:
+            rotating = True
 
         if facing_right:
             current_image = player_image
@@ -124,14 +130,15 @@ def main():
 
         if attacking:
             slash_rect = slash_image.get_rect()
-            #Put slash to right of player
             if facing_right:
+                # Put slash to right of player
                 slash_rect.midleft = (
                     player.x + player_image.get_width() / 2,
                     player.y + player_image.get_height() // 2
                 )
                 screen.blit(slash_image, slash_rect)
             else:
+                # Put slash to left of player
                 slash_rect.midright = (
                     player.x + player_image.get_width() / 2,
                     player.y + player_image.get_height() / 2
