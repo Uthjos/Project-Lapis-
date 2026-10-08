@@ -38,29 +38,27 @@ jobs:
   # install python dependencies from requirements.txt file
   python-dependencies:
     runs-on: ubuntu-latest
+    env:
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
     steps:
-        - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+      - run: pytest
 
-        - uses: actions/setup-python@v5
-          with:
-            python-version: "3.12"
-            cache: pip
-
-        # checks the requirements.txt file and installs files
-        - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
-
-        - name: Lint with Ruff
-          run: |
-            pip install ruff
-            ruff check .
-
-        - name: Run tests
-          env:
-            SDL_VIDEODRIVER: dummy
-            SDL_AUDIODRIVER: dummy
-          run: |
-            pip install pytest
-            pytest
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install ruff
+      - run: ruff check .
