@@ -4,6 +4,8 @@ from src.data_file_manage import JSONExporter
 class ExporterFactory:
     @staticmethod
     def createExporter(format: str):
+
+        # add different file formats here
         exporters = {
             "json": JSONExporter
         }
