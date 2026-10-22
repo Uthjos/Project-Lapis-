@@ -1,9 +1,16 @@
+from src.animation import AnimationStack, SpriteDirection
+
+
 class Character:
 
     def __init__(self, x=0, y=0, health=100):
         self.x = x
         self.y = y
         self.health = health
+        
+        #initial state of character
+        self.direction = SpriteDirection.S.direction
+        self.action = AnimationStack.Action.IDLE
 
     # moves the character by changing its x and y position
     def move(self, x, y):
@@ -20,6 +27,10 @@ class Character:
     # checks if the character is still alive
     def is_alive(self):
         return self.health > 0
+    
+    def update_state(direction: SpriteDirection, action: AnimationStack.Action, self=None):
+        self.direction = direction
+        self.action = action
 
     #attack1
     def attack(self):
