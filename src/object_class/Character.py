@@ -1,5 +1,4 @@
-from src.animation.SpriteDirection import SpriteDirection
-from src.animation.AnimationStack import AnimationStack, Action
+from src.animation.AnimationStack import Action, SpriteDirection
 
 
 class Character:
@@ -9,7 +8,7 @@ class Character:
         self.y = y
         self.health = health
         
-        #initial state of character
+        # initial state of character
         self.direction = SpriteDirection.S.direction
         self.action = Action.IDLE
 
@@ -32,6 +31,7 @@ class Character:
     def update_state(self, action: Action, direction: SpriteDirection):
         self.direction = direction
         self.action = action
+        pass
 
     #attack1
     def attack(self):

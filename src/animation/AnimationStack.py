@@ -1,6 +1,7 @@
 from enum import Enum
 
-from src.animation import SpriteDirection
+import pygame
+
 from src.data_file_manage import ExporterFactory
 
 
@@ -35,21 +36,161 @@ class Action(Enum):
     BOW_ATTACK = "bowattack"
     CROSS_BOW_ATTACK = "crossbowattack"
     STUNNED = "stunned"
+    THROW_ONE_HANDED = "throwonehanded"
+    THROW_TWO_HANDED = "throwtwohanded"
 
+# priority is associated with direction lower number means that they will be put first
+# meaning that they will be in the back of the sprite layer
 
+# for the North direction and South direction
+# front will be right part on screen and
+# back will be left part on screen
+class SpriteDirection(Enum):
+
+    N = ("N", {
+        AnimationPart.FRONT_LEG: 1,
+        AnimationPart.BACK_LEG: 2,
+        AnimationPart.HIP: 3,
+        AnimationPart.FRONT_TASSET: 4,
+        AnimationPart.BACK_TASSET: 5,
+        AnimationPart.TORSO: 6,
+        AnimationPart.FRONT_ARM: 7,
+        AnimationPart.BACK_ARM: 8,
+        AnimationPart.FRONT_PAULDRON: 9,
+        AnimationPart.BACK_PAULDRON: 10,
+        AnimationPart.HEAD: 11,
+        AnimationPart.FRONT_CLOAK: 12,
+        AnimationPart.BACK_CLOAK: 13,
+    })
+    NE = ("NE", {
+        AnimationPart.BACK_PAULDRON: 1,
+        AnimationPart.BACK_CLOAK: 2,
+        AnimationPart.BACK_ARM: 3,
+        AnimationPart.BACK_TASSET: 4,
+        AnimationPart.BACK_LEG: 5,
+        AnimationPart.HIP: 6,
+        AnimationPart.FRONT_LEG: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_TASSET: 9,
+        AnimationPart.FRONT_ARM: 10,
+        AnimationPart.HEAD: 11,
+        AnimationPart.FRONT_PAULDRON: 12,
+        AnimationPart.FRONT_CLOAK: 13,
+    })
+    E = ("E", {
+        AnimationPart.BACK_PAULDRON: 1,
+        AnimationPart.BACK_CLOAK: 2,
+        AnimationPart.BACK_ARM: 3,
+        AnimationPart.BACK_TASSET: 4,
+        AnimationPart.BACK_LEG: 5,
+        AnimationPart.HIP: 6,
+        AnimationPart.FRONT_LEG: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_TASSET: 9,
+        AnimationPart.HEAD: 10,
+        AnimationPart.FRONT_ARM: 11,
+        AnimationPart.FRONT_PAULDRON: 12,
+        AnimationPart.FRONT_CLOAK: 13,
+    })
+    SE = ("SE", {
+        AnimationPart.BACK_CLOAK: 1,
+        AnimationPart.BACK_PAULDRON: 2,
+        AnimationPart.BACK_ARM: 3,
+        AnimationPart.BACK_LEG: 4,
+        AnimationPart.BACK_TASSET: 5,
+        AnimationPart.HIP: 6,
+        AnimationPart.FRONT_LEG: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_TASSET: 9,
+        AnimationPart.FRONT_ARM: 10,
+        AnimationPart.FRONT_PAULDRON: 11,
+        AnimationPart.HEAD: 12,
+        AnimationPart.FRONT_CLOAK: 13,
+    })
+    S = ("S", {
+        AnimationPart.FRONT_CLOAK: 1,
+        AnimationPart.BACK_CLOAK: 2,
+        AnimationPart.FRONT_LEG: 3,
+        AnimationPart.BACK_LEG: 4,
+        AnimationPart.HIP: 5,
+        AnimationPart.FRONT_TASSET: 6,
+        AnimationPart.BACK_TASSET: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_ARM: 9,
+        AnimationPart.BACK_ARM: 10,
+        AnimationPart.FRONT_PAULDRON: 11,
+        AnimationPart.BACK_PAULDRON: 12,
+        AnimationPart.HEAD: 13,
+    })
+    SW = ("SW", {
+        AnimationPart.BACK_CLOAK: 1,
+        AnimationPart.BACK_PAULDRON: 2,
+        AnimationPart.BACK_ARM: 3,
+        AnimationPart.BACK_LEG: 4,
+        AnimationPart.BACK_TASSET: 5,
+        AnimationPart.HIP: 6,
+        AnimationPart.FRONT_LEG: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_TASSET: 9,
+        AnimationPart.FRONT_ARM: 10,
+        AnimationPart.FRONT_PAULDRON: 11,
+        AnimationPart.HEAD: 12,
+        AnimationPart.FRONT_CLOAK: 13,
+    })
+    W = ("W", {
+        AnimationPart.BACK_PAULDRON: 1,
+        AnimationPart.BACK_CLOAK: 2,
+        AnimationPart.BACK_ARM: 3,
+        AnimationPart.BACK_TASSET: 4,
+        AnimationPart.BACK_LEG: 5,
+        AnimationPart.HIP: 6,
+        AnimationPart.FRONT_LEG: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_TASSET: 9,
+        AnimationPart.HEAD: 10,
+        AnimationPart.FRONT_ARM: 11,
+        AnimationPart.FRONT_PAULDRON: 12,
+        AnimationPart.FRONT_CLOAK: 13,
+    })
+    NW = ("NW", {
+        AnimationPart.BACK_PAULDRON: 1,
+        AnimationPart.BACK_CLOAK: 2,
+        AnimationPart.BACK_ARM: 3,
+        AnimationPart.BACK_TASSET: 4,
+        AnimationPart.BACK_LEG: 5,
+        AnimationPart.HIP: 6,
+        AnimationPart.FRONT_LEG: 7,
+        AnimationPart.TORSO: 8,
+        AnimationPart.FRONT_TASSET: 9,
+        AnimationPart.FRONT_ARM: 10,
+        AnimationPart.HEAD: 11,
+        AnimationPart.FRONT_PAULDRON: 12,
+        AnimationPart.FRONT_CLOAK: 13,
+    })
+
+    def __init__(self, direction, layer_priority):
+        self.direction = direction
+        self.layer_priority = layer_priority
 
 class Animation:
     def __init__(self, direction: str, action: str, animation_time: int , file_location: list[str],
-                 ):
-        self.file_location = file_location
+                 max_frames: int, pygame_prop: list[dict]):
         self.direction = direction
         self.action = action
-        self.animation_time = animation_time
-        self.pygame_properties = {
-            PygameProp.position.value: list(0,0),
-            PygameProp.rotation.value: 0,
-            PygameProp.scale.value: 1,
-        }
+        self.animation_time = animation_time # speed can maybe change need to look into it
+        self.max_frames = max_frames
+
+        # file location only holds the file locations
+        self.file_location = file_location
+        self.pygame_prop = pygame_prop
+
+        # using this to call the frames and associate with pygame
+        animation_list = []
+        for file in file_location:
+            part_image = pygame.image.load(file).convert_alpha()
+            animation_list.append(part_image)
+
+
         self.body_part_animation_list = list
 
     def getFrame(self, frame_number):
@@ -57,6 +198,9 @@ class Animation:
 
     def setAnimationList(self, animationList):
         self.body_part_animation_list = animationList
+
+    def update_animation(self):
+        pass
 
     def to_dict(self):
         return {
