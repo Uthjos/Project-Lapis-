@@ -20,3 +20,8 @@ class Character:
     # checks if the character is still alive
     def is_alive(self):
         return self.health > 0
+
+    #attack1
+    def attack(self):
+        #TODO build attack call from item
+        pass

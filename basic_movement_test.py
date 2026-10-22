@@ -103,6 +103,7 @@ def main():
             if attack_timer <= 0:
                 attacking = False
 
+
         screen.fill("black")
 
         if moving:
