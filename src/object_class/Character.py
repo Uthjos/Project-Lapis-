@@ -1,4 +1,5 @@
-from src.animation import AnimationStack, SpriteDirection
+from src.animation.SpriteDirection import SpriteDirection
+from src.animation.AnimationStack import AnimationStack, Action
 
 
 class Character:
@@ -10,7 +11,7 @@ class Character:
         
         #initial state of character
         self.direction = SpriteDirection.S.direction
-        self.action = AnimationStack.Action.IDLE
+        self.action = Action.IDLE
 
     # moves the character by changing its x and y position
     def move(self, x, y):
@@ -28,7 +29,7 @@ class Character:
     def is_alive(self):
         return self.health > 0
     
-    def update_state(direction: SpriteDirection, action: AnimationStack.Action, self=None):
+    def update_state(self, action: Action, direction: SpriteDirection):
         self.direction = direction
         self.action = action
 
