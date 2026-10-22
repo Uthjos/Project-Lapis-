@@ -1,4 +1,5 @@
-(Direction)-(layer body part)-(description or name of armor).png
-Example:
-SE-backleg-plate_armor.png
+sprites
+    (Direction)-(layer body part)-(description or name of armor).png
+    Example:
+    SE-backleg-plate_armor.png
 
