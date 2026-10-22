@@ -31,7 +31,6 @@ class Character:
     def update_state(self, action: Action, direction: SpriteDirection):
         self.direction = direction
         self.action = action
-        pass
 
     #attack1
     def attack(self):
