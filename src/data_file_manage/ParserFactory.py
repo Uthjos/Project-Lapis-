@@ -9,8 +9,8 @@ def get_file_format (file_path):
 
 class ParserFactory:
     @staticmethod
-    def createParser(file_name: str):
-        filetype = get_file_format(format)
+    def create_parser(file_name: str):
+        filetype = get_file_format(file_name)
         parsers = {
             'json': JSONParser,
         }
