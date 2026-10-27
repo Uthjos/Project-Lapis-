@@ -1,4 +1,5 @@
 from src.animation.AnimationStack import Action, SpriteDirection
+from src.object_class.Inventory import Inventory
 
 
 class Character:
@@ -11,6 +12,8 @@ class Character:
         # initial state of character
         self.direction = SpriteDirection.S.direction
         self.action = Action.IDLE
+        self.inventory = Inventory()
+        self.equipped_item = None
 
     # moves the character by changing its x and y position
     def move(self, x, y):
@@ -36,3 +39,10 @@ class Character:
     def attack(self):
         #TODO build attack call from item
         pass
+
+    def equip_item(self, item):
+        """Equip an item only when it belongs to this character's inventory."""
+        if not self.inventory.has_item(item):
+            return False
+        self.equipped_item = item
+        return True

@@ -7,6 +7,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.object_class.Character import Character
+from src.object_class.Item import Item
+from src.ui.InventoryUI import InventoryUI
+
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -75,7 +78,8 @@ top_height: height in pixels of the diamond-shaped top face of the sprite.
             Defaults to half the tile width (standard 2:1 isometric).
             Tweak this if the green tops show gaps or overlap.
 """
-def build_background(texture, tile_map, width, height, top_height=None):
+def build_background(texture, tile_map, width,
+                     height, top_height=None):
 
     tile_w, tile_h = texture.get_size()
     if top_height is None:
@@ -120,14 +124,21 @@ def main():
 
     #load assets
     # Environment textures (add more stage tiles to this list later)
+    # TEMPORARY: Placeholder tile art; replace with the team's approved terrain tile.
     stage_textures = [scale_image(load_environment_tile("earth_tile.png"), TILE_SCALE)]
     background = build_background(stage_textures[0], TILE_MAP, SCREEN_WIDTH, SCREEN_HEIGHT)
 
     #player data
     player_image = load_sprite("Sprite style 2.png")
-
-
     player = Character(380, 280)
+    # Temporary sample items so you can test the screen
+    player.inventory.add_item(Item("Rusty Sword", "weapon", "A basic starting weapon."))
+    player.inventory.add_item(Item("Health Potion", "consumable",
+    "Restores health when used."))
+    inventory_ui = InventoryUI(player.inventory, player)
+    inventory_open = False
+
+
     facing_right = True
 
     running = True
@@ -135,23 +146,33 @@ def main():
         clock.tick(FPS)
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
+            if event.type == pygame.QUIT or (
+                    event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
+            ):
+                if inventory_open and event.type == pygame.KEYDOWN:
+                    inventory_open = False
+                else:
+                    running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
+                inventory_open = not inventory_open
+            elif inventory_open:
+                inventory_ui.handle_event(event, screen.get_size())
 
         #input
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
-            player.move(0, -PLAYER_SPEED)
-        if keys[pygame.K_s]:
-            player.move(0, PLAYER_SPEED)
-        if keys[pygame.K_a]:
-            player.move(-PLAYER_SPEED, 0)
-            facing_right = False
-        if keys[pygame.K_d]:
-            player.move(PLAYER_SPEED, 0)
-            facing_right = True
-        if keys[pygame.K_SPACE]:
-            player.attack()
+        if not inventory_open:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_w]:
+                player.move(0, -PLAYER_SPEED)
+            if keys[pygame.K_s]:
+                player.move(0, PLAYER_SPEED)
+            if keys[pygame.K_a]:
+                player.move(-PLAYER_SPEED, 0)
+                facing_right = False
+            if keys[pygame.K_d]:
+                player.move(PLAYER_SPEED, 0)
+                facing_right = True
+            if keys[pygame.K_SPACE]:
+                player.attack()
 
 
 
@@ -160,6 +181,8 @@ def main():
 
         sprite = player_image if facing_right else pygame.transform.flip(player_image, True, False)
         screen.blit(sprite, (player.x, player.y))
+        if inventory_open:
+            inventory_ui.draw(screen)
 
         pygame.display.flip()
 
