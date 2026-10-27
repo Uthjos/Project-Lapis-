@@ -10,7 +10,6 @@ from src.object_class.Character import Character
 from src.object_class.Item import Item
 from src.ui.InventoryUI import InventoryUI
 
-
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 PLAYER_SPEED = 5
