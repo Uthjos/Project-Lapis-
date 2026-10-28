@@ -1,9 +1,8 @@
+import AnimationMenuView
+import AnimationMenuVM
 import pygame
 from pygame.sprite import Sprite
 
-import AnimationMenuVM
-import AnimationMenuView
-import AnimationMenu
 
 def main():
     pygame.init()
