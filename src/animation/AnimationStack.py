@@ -1,6 +1,7 @@
 from enum import Enum
 
 import pygame
+from pygame.sprite import Sprite
 
 from src.data_file_manage import ExporterFactory
 
@@ -178,7 +179,7 @@ class SpriteDirection(Enum):
         return self.layer_priority
 
 
-class Animation:
+class Animation(Sprite):
     def __init__(self, direction: str, action: str, animation_time: int , file_location: list[str],
                  max_frames: int, pygame_prop: list[dict]):
         self.direction = direction

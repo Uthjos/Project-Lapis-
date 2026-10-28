@@ -12,7 +12,7 @@ class Character:
         self.health = health
         
         # initial state of character
-        self.direction = SpriteDirection.S.direction
+        self.direction = SpriteDirection.S
         self.action = Action.IDLE
         self.inventory = Inventory()
         self.equipped_item = None
