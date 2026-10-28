@@ -1,4 +1,3 @@
-import pygame
 
 from src.animation_editor.AnimationEditorVM import Observable
 
@@ -48,16 +47,3 @@ class AnimationMenuVM:
 
         def request_quit(self):
             self.quit_requested = True
-
-        # MenuVM
-        KEYMAP = {(pygame.K_z, pygame.KMOD_CTRL): "edit.undo",
-                  (pygame.K_y, pygame.KMOD_CTRL): "edit.redo",
-                  (pygame.K_s, pygame.KMOD_CTRL): "file.save"}
-
-        def handle_key(self, key, mods):
-            for (k, m), action in self.KEYMAP.items():
-                if key == k and mods & m:
-                    fn, enabled = self._actions[action]
-                    if enabled(): fn()
-                    return True
-            return False
