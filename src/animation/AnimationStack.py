@@ -168,9 +168,15 @@ class SpriteDirection(Enum):
         AnimationPart.FRONT_CLOAK: 13,
     })
 
-    def __init__(self, direction, layer_priority):
-        self.direction = direction
-        self.layer_priority = layer_priority
+    def __new__(cls, direction, layer_priority):
+        obj = object.__new__(cls)
+        obj._value_ = direction
+        obj.layer_priority = layer_priority
+        return obj
+
+    def get_layer_priority(self):
+        return self.layer_priority
+
 
 class Animation:
     def __init__(self, direction: str, action: str, animation_time: int , file_location: list[str],
