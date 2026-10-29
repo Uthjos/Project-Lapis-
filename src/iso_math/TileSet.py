@@ -9,6 +9,8 @@ class Tile(IntEnum):
     VOID = 0
     FLOOR = 1
     WALL = 2
+    PATH = 3
+    Water = 4
 
 
 @dataclass(frozen=True)

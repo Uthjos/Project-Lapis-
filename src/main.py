@@ -13,7 +13,7 @@ from src.ui.InventoryUI import InventoryUI
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-PLAYER_SPEED = 5
+PLAYER_SPEED = 3
 ATTACK_DURATION = 2000
 FPS = 60
 
@@ -33,19 +33,21 @@ TILE_SCALE = 3
 TILE_MAP = [
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 0, 0, 1, 1, 0, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 3, 4, 4, 1, 1, 1, 1, 1],
+    [1, 1, 3, 4, 4, 1, 1, 4, 1, 1],
+    [1, 1, 3, 3, 3, 1, 1, 4, 1, 1],
+    [1, 1, 1, 1, 3, 3, 1, 1, 1, 1],
+    [1, 1, 4, 1, 1, 3, 3, 1, 1, 1],
+    [1, 1, 4, 1, 1, 1, 3, 3, 1, 1],
+    [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 3, 1, 1, 1, 0], # <-- Bottom-most tile
 ]
 
 TILESET = TileSet({
     Tile.VOID:  TileType("void"),
-    Tile.FLOOR: TileType("earth", "earth_tile.png", walkable=True),
+    Tile.FLOOR: TileType("earth", "GrassDirt_tile.png", walkable=True),
+    Tile.PATH: TileType("path", "GrassStone_tile.png", walkable=True),
+    Tile.Water: TileType("water", "Watertile.png", walkable=False),
     #Tile.WALL:  TileType("wall", "wall_tile.png", walkable=False),
 })
 
@@ -71,7 +73,7 @@ def load_environment_tile(filename):
 
 
 def main():
-    DEBUG_OVERLAY = True
+    DEBUG_OVERLAY = False
     pygame.init()
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
