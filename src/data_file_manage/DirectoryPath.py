@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
 
@@ -9,6 +11,8 @@ DATA_DIR = BASE_DIR / "data"
 class DirectoryPath(Enum):
     ROOT = BASE_DIR
     DATA = DATA_DIR
+
+
     SPRITE = DATA_DIR / 'sprites'
     WEAPON = DATA_DIR / 'weapons'
     ANIMATION = DATA_DIR / 'animations'
@@ -21,17 +25,15 @@ class DirectoryPath(Enum):
     # Test change by Majid
     @staticmethod
     def _make_dir(dirpath: DirectoryPath):
-        if dirpath.value.is_dir():
-            return
-        else:
-            dirpath.value.mkdir(parents=True, exist_ok=True)
+        dirpath.value.mkdir(parents=True, exist_ok=True)
 
     """Use this to call the Directory paths"""
     @staticmethod
-    def get_dir(dirpath: DirectoryPath):
+    def get_dir(dirpath: DirectoryPath) -> DirectoryPath:
         DirectoryPath._make_dir(dirpath)
         return dirpath
 
 if __name__ == '__main__':
-    print(DirectoryPath.ROOT.value)
-    print(DirectoryPath.ASSET_TEST_DIR.value)
+    sprite_dir = DirectoryPath.get_dir(DirectoryPath.SPRITE)
+
+    print(sprite_dir)
