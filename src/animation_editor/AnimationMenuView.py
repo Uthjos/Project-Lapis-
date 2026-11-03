@@ -1,89 +1,125 @@
+import pathlib
+import customtkinter as ctk
 import pygame
+from PIL import Image, ImageTk
+from pathlib import Path
+
+from AnimationMenuVM import AnimationMenuVM as amvm
+from src.data_file_manage.DirectoryPath import DirectoryPath
 
 
-class MenuView:
-    BAR_H, ITEM_H, PAD = 24, 22, 12
+# Initialize Pygame (off-screen)
+pygame.init()
 
-    def __init__(self, vm, font, width):
-        self.vm, self.font = vm, font
-        self.bar_rect = pygame.Rect(0, 0, width, self.BAR_H)
-        self._layout()
+WIDTH, HEIGHT = 600, 600
 
-    def _layout(self):
-        x = 0
-        self.title_rects = []
-        for m in self.vm.menus:
-            w = self.font.size(m.title)[0] + self.PAD * 2
-            self.title_rects.append(pygame.Rect(x, 0, w, self.BAR_H))
-            x += w
+# render surface
+pygame_surface = pygame.Surface((WIDTH, HEIGHT))
 
-    def _dropdown_rect(self, i):
-        m, tr = self.vm.menus[i], self.title_rects[i]
-        w = max(self.font.size(it.label + "    " + it.shortcut)[0] for it in m.items) + self.PAD * 2
-        return pygame.Rect(tr.x, self.BAR_H, w, len(m.items) * self.ITEM_H)
 
-    def _item_rects(self, i):
-        dd = self._dropdown_rect(i)
-        return [pygame.Rect(dd.x, dd.y + k * self.ITEM_H, dd.w, self.ITEM_H)
-                for k in range(len(self.vm.menus[i].items))]
 
-    def handle_event(self, e) -> bool:
-        """Returns True if the menu consumed the event, so other views don't also react."""
-        open_i = self.vm.open_menu.get()
+class AnimationMenuView(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-        if e.type == pygame.MOUSEMOTION:
-            for i, r in enumerate(self.title_rects):
-                if r.collidepoint(e.pos):
-                    self.vm.hover_menu(i)
-            if open_i is not None:
-                hit = next((k for k, r in enumerate(self._item_rects(open_i))
-                            if r.collidepoint(e.pos)), None)
-                self.vm.hover_item.set(hit)
-            return open_i is not None
+        self.title("Animation Editor")
+        self.geometry("800x700")
 
-        if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
-            for i, r in enumerate(self.title_rects):
-                if r.collidepoint(e.pos):
-                    self.vm.toggle_menu(i)
-                    return True
-            if open_i is not None:
-                for k, r in enumerate(self._item_rects(open_i)):
-                    if r.collidepoint(e.pos):
-                        item = self.vm.menus[open_i].items[k]
-                        if item.action:
-                            self.vm.activate(item)
-                        return True
-                self.vm.close()                # clicked elsewhere: close, and swallow the click
-                return True
+        self.running = True
 
-        if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE and open_i is not None:
-            self.vm.close()
-            return True
-        return False
+        # Sprite directory
+        self.SPRITE_DIR = Path(__file__).resolve().parent.parent / "assets" / "sprites"
 
-    def draw(self, surf):
-        pygame.draw.rect(surf, (40, 40, 48), self.bar_rect)
-        open_i = self.vm.open_menu.get()
-        for i, (m, r) in enumerate(zip(self.vm.menus, self.title_rects)):
-            if i == open_i:
-                pygame.draw.rect(surf, (70, 70, 90), r)
-            surf.blit(self.font.render(m.title, True, (230, 230, 230)),
-                      (r.x + self.PAD, r.y + 4))
+        # Sprite group
+        self.sprite_group = pygame.sprite.Group()
 
-        if open_i is None:
+        #testing sprite
+        file = self.SPRITE_DIR / "Sprite style 2.png"
+        self.animation_sprite = SpriteView(
+            file,
+            (300, 300),
+            (128, 128),
+        )
+
+        self.sprite_group.add(self.animation_sprite)
+
+        # Preview frame
+        self.video_label = ctk.CTkLabel(
+            self,
+            text=""
+        )
+        self.video_label.pack(
+            expand=True,
+            padx=5,
+            pady=5,
+        )
+
+        # Start rendering
+        self.update_pygame_frame()
+
+        # Handle closing
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def render_frame(self):
+        # Clear background
+        pygame_surface.fill((255, 255, 255))
+
+        #Draw Sprites
+        self.sprite_group.draw(pygame_surface)
+
+    def display_frame(self):
+
+        # Convert Pygame surface to PIL
+        data = pygame.image.tobytes(pygame_surface, "RGBA")
+
+        pil_image = Image.frombytes("RGBA", (WIDTH, HEIGHT), data)
+
+        # Convert to Tkinter image
+        self.tkimage = ImageTk.PhotoImage(image=pil_image)
+
+        # Display
+        self.video_label.configure(image=self.tkimage)
+
+
+    def update_pygame_frame(self):
+
+        if not self.running:
             return
-        dd = self._dropdown_rect(open_i)
-        pygame.draw.rect(surf, (50, 50, 60), dd)
-        for k, (item, r) in enumerate(zip(self.vm.menus[open_i].items, self._item_rects(open_i))):
-            if item.action is None:            # separator
-                pygame.draw.line(surf, (90, 90, 100), (r.x + 6, r.centery), (r.right - 6, r.centery))
-                continue
-            enabled = self.vm.is_enabled(item)
-            if k == self.vm.hover_item.get() and enabled:
-                pygame.draw.rect(surf, (80, 100, 160), r)
-            color = (230, 230, 230) if enabled else (110, 110, 120)
-            label = ("✓ " if self.vm.is_checked(item) else "") + item.label
-            surf.blit(self.font.render(label, True, color), (r.x + self.PAD, r.y + 3))
-            if item.shortcut:
-                s = self.font.render(item.shortcut, True, color)
-                surf.blit(s, (r.right - s.get_width() - self.PAD, r.y + 3))
+
+        # self.update_animation()
+        self.render_frame()
+        self.display_frame()
+
+        # Approximately 60 FPS update the image again
+        self.after(16, self.update_pygame_frame)
+
+    def on_close(self):
+
+        self.running = False
+        self.destroy()
+        pygame.quit()
+
+
+
+class SpriteView(pygame.sprite.Sprite):
+    def __init__(self, image_path, position, scale=None):
+        super().__init__()
+
+
+        self.image = amvm.load_image(str(image_path))
+
+        if scale:
+            self.image = pygame.transform.scale(self.image, scale)
+
+        self.rect = self.image.get_rect(center=position)
+
+    def set_position(self,x,y):
+        self.rect.center = (x,y)
+
+    def update(self):
+        pass
+
+
+if __name__ == "__main__":
+    view = AnimationMenuView()
+    view.mainloop()
