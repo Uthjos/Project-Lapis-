@@ -1,4 +1,3 @@
-import pathlib
 import pygame
 
 from src.animation.AnimationStack import *

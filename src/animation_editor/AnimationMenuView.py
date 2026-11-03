@@ -1,12 +1,9 @@
-import pathlib
-import customtkinter as ctk
-import pygame
-from PIL import Image, ImageTk
 from pathlib import Path
 
+import customtkinter as ctk
+import pygame
 from AnimationMenuVM import AnimationMenuVM as amvm
-from src.data_file_manage.DirectoryPath import DirectoryPath
-
+from PIL import Image, ImageTk
 
 # Initialize Pygame (off-screen)
 pygame.init()
