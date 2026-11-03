@@ -112,8 +112,6 @@ def build_background(texture, tile_map, width, height, top_height=None):
 
 
 def main():
-    pygame.init()
-
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Project Lapis")
     clock = pygame.time.Clock()
