@@ -43,7 +43,8 @@ class SpriteDirection(Enum):
     W = "W"
     NW = "NW"
 
-
+"""PygameProp contains the pygame transformation data that is associated with
+each sprite associated with the individual parts"""
 @dataclass
 class PygameProp:
     x: float = 0
@@ -65,6 +66,7 @@ class PygameProp:
             "center": list(self.center),
         }
 
+"""the Individual sprites that are the different parts on the character"""
 @dataclass
 class SpriteData(PygameProp):
     part: AnimationPart = AnimationPart.HEAD
@@ -77,6 +79,7 @@ class SpriteData(PygameProp):
             "properties": super().to_dict()
         }
 
+"""The whole picture where everything comes together for a single frame"""
 @dataclass
 class Frame(PygameProp):
     frame_number: int = 0
@@ -93,7 +96,7 @@ class Frame(PygameProp):
             ],
         }
 
-
+"""contains every possible action that a NPC or Character should be able to do"""
 @dataclass
 class AnimationStack:
     animations: dict = field(
