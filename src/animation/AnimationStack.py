@@ -1,6 +1,8 @@
+from dataclasses import dataclass
 from enum import Enum
 
 import pygame
+from astroid.nodes import Position
 from pygame.sprite import Sprite
 
 from src.data_file_manage import ExporterFactory
@@ -21,10 +23,6 @@ class AnimationPart(Enum):
     FRONT_PAULDRON = "frontpauldron"
     BACK_PAULDRON = "backpauldron"
 
-class PygameProp(Enum):
-    position = "position"
-    rotation = "rotation"
-    scale = "scale"
 
 class Action(Enum):
     WALK = "walk"
@@ -258,6 +256,41 @@ class AnimationStack:
         pass # will create the Animation stack from JSON file
 
 
+@dataclass
+class PygameProp:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.scale = tuple
+        self.rotation = 0
+        self.flip = False
+
+
+@dataclass
+class Frame(PygameProp):
+    def __init__(self):
+        # call pygame prop and their methods
+        super().__init__()
+        self.frameNumber = 0
+        self.animation = None
+        self.time_to_next_frame = 0
+        self.file_location = None
+
+    def to_dict(self):
+        return {
+            'Frame': {
+                'frameNumber': self.frameNumber,
+                'animation': self.animation,
+                'time_to_next_frame': self.time_to_next_frame,
+                'file_location': self.file_location,
+            },
+            'PygameProp': {
+                'x': self.x,
+                'y': self.y,
+                'scale': self.scale,
+                'rotation': self.rotation,
+                'flip': self.flip,
+            }}
 
 
 
