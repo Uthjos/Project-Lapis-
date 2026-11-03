@@ -63,6 +63,8 @@ class AnimationMenuView(ctk.CTk):
         # Handle closing
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
+    """This will create the action menu for more options to get and navigate
+    through the animation editor"""
     def create_menu(self):
         # creates the action menu
         action_menu = tk.Menu(self)
