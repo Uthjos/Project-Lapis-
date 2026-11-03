@@ -10,6 +10,7 @@ from src.iso_math.TileSet import Tile, TileSet, TileType
 from src.object_class.Character import Character
 from src.object_class.Item import Item
 from src.ui.InventoryUI import InventoryUI
+from src.object_class.WeaponFactory import WeaponFactory
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -91,7 +92,11 @@ def main():
     player.set_collision_map(grid)
 
     # Temporary sample items so you can test the screen
-    player.inventory.add_item(Item("Rusty Sword", "weapon", "A basic starting weapon."))
+
+    # Create starting sword from JSON data
+    weapon_factory = WeaponFactory()
+    player.inventory.add_item(weapon_factory.create_weapon("rusty_sword"))
+
     player.inventory.add_item(Item("Health Potion", "consumable",
     "Restores health when used."))
     inventory_ui = InventoryUI(player.inventory, player)
