@@ -1,7 +1,6 @@
+import tkinter as tk
 from pathlib import Path
 
-import tkinter as tk
-from tkinter import filedialog
 import customtkinter as ctk
 import pygame
 from AnimationMenuVM import AnimationMenuVM as amvm
