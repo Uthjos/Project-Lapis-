@@ -79,6 +79,7 @@ def main_game(screen):
     inventory_ui = InventoryUI(player.inventory, player)
     inventory_open = False
     facing_right = True
+    enemies=[]
 
     while True:
         clock.tick(FPS)
@@ -110,9 +111,15 @@ def main_game(screen):
             if keys[pygame.K_d]:
                 player.move(PLAYER_SPEED, 0)
                 facing_right = True
+            
+            if keys[pygame.K_w]: player.move(0, -PLAYER_SPEED); player.facing = (0, -1)
+            if keys[pygame.K_s]: player.move(0, PLAYER_SPEED);  player.facing = (0, 1)
+            if keys[pygame.K_a]: player.move(-PLAYER_SPEED, 0); player.facing = (-1, 0); facing_right = False
+            if keys[pygame.K_d]: player.move(PLAYER_SPEED, 0);  player.facing = (1, 0);  facing_right = True
             if keys[pygame.K_SPACE]:
-                player.attack()
+                player.attack(enemies, pygame.time.get_ticks())
 
+            enemies = [e for e in enemies if e.is_alive()]
         # Draw (back to front).
         screen.blit(background, (0, 0))
         sprite = player_image if facing_right else pygame.transform.flip(player_image, True, False)
