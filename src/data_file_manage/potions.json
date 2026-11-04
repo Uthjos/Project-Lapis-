@@ -1,0 +1,36 @@
+
+{
+    "health_potion": {
+        "name": "Health Potion",
+        "type": "consumable",
+        "description": "Restores 25 health.",
+        "health": 25,
+        "mana": 0,
+        "stamina": 0,
+        "strength": 0,
+        "defense": 0,
+        "speed": 0
+    },
+    "strength_potion": {
+        "name": "Strength Potion",
+        "type": "consumable",
+        "description": "Increases strength but reduces speed.",
+        "health": 0,
+        "mana": 0,
+        "stamina": 0,
+        "strength": 10,
+        "defense": 0,
+        "speed": -3
+    },
+    "poison_potion": {
+        "name": "Poison Potion",
+        "type": "consumable",
+        "description": "Reduces health and stamina.",
+        "health": -20,
+        "mana": 0,
+        "stamina": -5,
+        "strength": 0,
+        "defense": 0,
+        "speed": 0
+    }
+}
