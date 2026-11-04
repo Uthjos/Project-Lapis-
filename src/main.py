@@ -12,8 +12,8 @@ from src.object_class.Item import Item
 from src.object_class.WeaponFactory import WeaponFactory
 from src.ui.InventoryUI import InventoryUI
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 PLAYER_SPEED = 3
 ATTACK_DURATION = 2000
 FPS = 60
@@ -32,23 +32,28 @@ BACKGROUND_COLOR = (0, 0, 0)  # shows through wherever the tile map is 0
 # column is on the left side of the map.
 TILE_SCALE = 3
 TILE_MAP = [
-    [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 3, 4, 4, 1, 1, 1, 1, 1],
-    [1, 1, 3, 4, 4, 1, 1, 4, 1, 1],
-    [1, 1, 3, 3, 3, 1, 1, 4, 1, 1],
-    [1, 1, 1, 1, 3, 3, 1, 1, 1, 1],
-    [1, 1, 4, 1, 1, 3, 3, 1, 1, 1],
-    [1, 1, 4, 1, 1, 1, 3, 3, 1, 1],
-    [1, 1, 1, 1, 1, 3, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 3, 1, 1, 1, 0], # <-- Bottom-most tile
+    [0, 1, 7, 6, 7, 1, 1, 10, 10, 0],
+    [1, 6, 7, 7, 8, 8, 1, 11, 1, 1],
+    [1, 1, 8, 7, 4, 8, 1, 11, 7, 1],
+    [1, 1, 8, 4, 4, 8, 1, 4, 6, 6],
+    [9, 1, 8,8, 8, 8, 1, 4, 7, 1],
+    [9, 9, 1, 1, 8, 8, 1, 9, 7, 1],
+    [1, 9, 4, 6, 9, 8, 8, 1, 1, 1],
+    [9, 1, 4, 6, 1, 1, 8, 8, 1, 1],
+    [10, 1, 8, 8, 1, 8, 6, 9, 6, 6],
+    [0, 1, 1, 1, 1, 8, 1, 1, 6, 0], # <-- Bottom-most tile
 ]
 
 TILESET = TileSet({
     Tile.VOID:  TileType("void"),
-    Tile.FLOOR: TileType("earth", "GrassDirt_tile.png", walkable=True),
-    Tile.PATH: TileType("path", "GrassStone_tile.png", walkable=True),
     Tile.Water: TileType("water", "Watertile.png", walkable=False),
+    Tile.GRASS_CLEAN : TileType("grass", "Grass_Clean_Tile.png", walkable=True),
+    Tile.LIGHT_DIRT: TileType("light", "Light_Dirt_Tile.png", walkable=True),
+    Tile.MED_DIRT: TileType("med", "Med_Dirt_Tile.png", walkable=True),
+    Tile.DARK_DIRT: TileType("dark", "Dark_Dirt_Tile.png", walkable=True),
+    Tile.SMALL_ROCK: TileType("small_rock", "Small_Rock_Tile.png", walkable=True),
+    Tile.MEDIUM_ROCK: TileType("medium_rock", "Med_Rock_Tile.png", walkable=True),
+    Tile.LARGE_ROCK: TileType("large_rock", "Large_Rock_Tile.png", walkable=False),
     #Tile.WALL:  TileType("wall", "wall_tile.png", walkable=False),
 })
 
@@ -88,7 +93,7 @@ def main():
 
     #player data
     player_image = load_sprite("Sprite style 2.png")
-    player = Character(380, 280)
+    player = Character( SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 ) #Spawn in center of screen
     player.set_collision_map(grid)
 
     # Temporary sample items so you can test the screen
