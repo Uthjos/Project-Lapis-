@@ -1,0 +1,129 @@
+from pathlib import Path
+
+import pygame
+
+from src.iso_math.IsoGrid import IsoGrid
+from src.iso_math.TileSet import Tile, TileSet, TileType
+from src.object_class.Character import Character
+from src.object_class.Item import Item
+from src.object_class.WeaponFactory import WeaponFactory
+from src.scenes import Scene
+from src.ui.InventoryUI import InventoryUI
+
+PLAYER_SPEED = 3
+ATTACK_DURATION = 2000
+FPS = 60
+DEBUG_OVERLAY = False
+
+SPRITE_DIR = Path(__file__).resolve().parent / "assets" / "sprites"
+TILE_DIR = Path(__file__).resolve().parent / "assets" / "tiles"
+
+BACKGROUND_COLOR = (0, 0, 0)  # shows through wherever the tile map is 0
+TILE_SCALE = 3
+
+# Row 0 is the back of the map (top of the screen); each row's first column is on the left.
+TILE_MAP = [
+    [0, 1, 7, 6, 7, 1, 1, 10, 10, 0],
+    [1, 6, 7, 7, 8, 8, 1, 11, 1, 1],
+    [1, 1, 8, 7, 4, 8, 1, 11, 7, 1],
+    [1, 1, 8, 4, 4, 8, 1, 4, 6, 6],
+    [9, 1, 8, 8, 8, 8, 1, 4, 7, 1],
+    [9, 9, 1, 1, 8, 8, 1, 9, 7, 1],
+    [1, 9, 4, 6, 9, 8, 8, 1, 1, 1],
+    [9, 1, 4, 6, 1, 1, 8, 8, 1, 1],
+    [10, 1, 8, 8, 1, 8, 6, 9, 6, 6],
+    [0, 1, 1, 1, 1, 8, 1, 1, 6, 0],  # <-- Bottom-most tile
+]
+
+TILESET = TileSet({
+    Tile.VOID: TileType("void"),
+    Tile.Water: TileType("water", "Watertile.png", walkable=False),
+    Tile.GRASS_CLEAN: TileType("grass", "Grass_Clean_Tile.png", walkable=True),
+    Tile.LIGHT_DIRT: TileType("light", "Light_Dirt_Tile.png", walkable=True),
+    Tile.MED_DIRT: TileType("med", "Med_Dirt_Tile.png", walkable=True),
+    Tile.DARK_DIRT: TileType("dark", "Dark_Dirt_Tile.png", walkable=True),
+    Tile.SMALL_ROCK: TileType("small_rock", "Small_Rock_Tile.png", walkable=True),
+    Tile.MEDIUM_ROCK: TileType("medium_rock", "Med_Rock_Tile.png", walkable=True),
+    Tile.LARGE_ROCK: TileType("large_rock", "Large_Rock_Tile.png", walkable=False),
+})
+
+
+def load_sprite(filename):
+    """Needs the display to exist (convert_alpha)."""
+    return pygame.image.load(str(SPRITE_DIR / filename)).convert_alpha()
+
+
+def load_environment_tile(filename):
+    """Needs the display to exist (convert_alpha)."""
+    return pygame.image.load(str(TILE_DIR / filename)).convert_alpha()
+
+
+def main_game(screen):
+    screen_width, screen_height = screen.get_size()
+    clock = pygame.time.Clock()
+
+    # Load assets.
+    TILESET.load(load_environment_tile, TILE_SCALE)
+    grid = IsoGrid(TILE_MAP, TILESET, screen_width, screen_height)
+    background = grid.render(BACKGROUND_COLOR)
+
+    # Player data.
+    player_image = load_sprite("Sprite style 2.png")
+    player = Character(screen_width / 2, screen_height / 2)  # spawn in center
+    player.set_collision_map(grid)
+
+    # Temporary sample items.
+    weapon_factory = WeaponFactory()
+    player.inventory.add_item(weapon_factory.create_weapon("rusty_sword"))
+    player.inventory.add_item(Item("Health Potion", "consumable", "Restores health when used."))
+    inventory_ui = InventoryUI(player.inventory, player)
+    inventory_open = False
+    facing_right = True
+
+    while True:
+        clock.tick(FPS)
+
+        # Handle events.
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return Scene.QUIT
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                if inventory_open:
+                    inventory_open = False
+                else:
+                    return Scene.MENU
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
+                inventory_open = not inventory_open
+            elif inventory_open:
+                inventory_ui.handle_event(event, screen.get_size())
+
+        # Input.
+        if not inventory_open:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_w]:
+                player.move(0, -PLAYER_SPEED)
+            if keys[pygame.K_s]:
+                player.move(0, PLAYER_SPEED)
+            if keys[pygame.K_a]:
+                player.move(-PLAYER_SPEED, 0)
+                facing_right = False
+            if keys[pygame.K_d]:
+                player.move(PLAYER_SPEED, 0)
+                facing_right = True
+            if keys[pygame.K_SPACE]:
+                player.attack()
+
+        # Draw (back to front).
+        screen.blit(background, (0, 0))
+        sprite = player_image if facing_right else pygame.transform.flip(player_image, True, False)
+        screen.blit(sprite, (player.x, player.y))
+        if inventory_open:
+            inventory_ui.draw(screen)
+
+        pygame.draw.rect(screen, (255, 0, 0), player.movement_hitbox, width=2)
+        if DEBUG_OVERLAY:
+            for r in range(grid.rows):
+                for c in range(len(grid.tile_map[r])):
+                    color = (0, 255, 0) if TILESET.is_walkable(grid.tile_map[r][c]) else (255, 0, 0)
+                    pygame.draw.polygon(screen, color, grid.tile_diamond(r, c), 1)
+        pygame.display.flip()
