@@ -1,30 +1,28 @@
+from dataclasses import dataclass, field
 from enum import Enum
 
 import pygame
-from pygame.sprite import Sprite
 
-from src.data_file_manage import ExporterFactory
+from src.data_file_manage.DirectoryPath import DirectoryPath as dp
+from src.data_file_manage.ExporterFactory import ExporterFactory
+from src.data_file_manage.ParserFactory import ParserFactory
 
 
 class AnimationPart(Enum):
-    BACK_ARM = "backarm"
-    BACK_LEG = "backleg"
+    BACK_ARM = "back_arm"
+    BACK_LEG = "back_leg"
     HIP = "hip"
     TORSO = "torso"
-    FRONT_LEG = "frontleg"
+    FRONT_LEG = "front_leg"
     HEAD = "head"
-    FRONT_ARM = "frontarm"
-    FRONT_CLOAK = "frontcloak"
-    BACK_CLOAK = "backcloak"
-    FRONT_TASSET = "fronttaskset"
-    BACK_TASSET = "backtaskset"
-    FRONT_PAULDRON = "frontpauldron"
-    BACK_PAULDRON = "backpauldron"
+    FRONT_ARM = "front_arm"
+    FRONT_CLOAK = "front_cloak"
+    BACK_CLOAK = "back_cloak"
+    FRONT_TASSET = "front_taskset"
+    BACK_TASSET = "back_taskset"
+    FRONT_PAULDRON = "front_pauldron"
+    BACK_PAULDRON = "back_pauldron"
 
-class PygameProp(Enum):
-    position = "position"
-    rotation = "rotation"
-    scale = "scale"
 
 class Action(Enum):
     WALK = "walk"
@@ -34,230 +32,154 @@ class Action(Enum):
     CAST = "cast"
     IDLE = "idle"
     INJURED = "injured"
-    BOW_ATTACK = "bowattack"
-    CROSS_BOW_ATTACK = "crossbowattack"
+    BOW_ATTACK = "bow_attack"
+    CROSS_BOW_ATTACK = "crossbow_attack"
     STUNNED = "stunned"
-    THROW_ONE_HANDED = "throwonehanded"
-    THROW_TWO_HANDED = "throwtwohanded"
+    THROW_ONE_HANDED = "throw_one_handed"
+    THROW_TWO_HANDED = "throw_two_handed"
+    JUMP = "jump"
 
-# priority is associated with direction lower number means that they will be put first
-# meaning that they will be in the back of the sprite layer
 
-# for the North direction and South direction
-# front will be right part on screen and
-# back will be left part on screen
 class SpriteDirection(Enum):
+    N = "N"
+    NE = "NE"
+    E = "E"
+    SE = "SE"
+    S = "S"
+    SW = "SW"
+    W = "W"
+    NW = "NW"
 
-    N = ("N", {
-        AnimationPart.FRONT_LEG: 1,
-        AnimationPart.BACK_LEG: 2,
-        AnimationPart.HIP: 3,
-        AnimationPart.FRONT_TASSET: 4,
-        AnimationPart.BACK_TASSET: 5,
-        AnimationPart.TORSO: 6,
-        AnimationPart.FRONT_ARM: 7,
-        AnimationPart.BACK_ARM: 8,
-        AnimationPart.FRONT_PAULDRON: 9,
-        AnimationPart.BACK_PAULDRON: 10,
-        AnimationPart.HEAD: 11,
-        AnimationPart.FRONT_CLOAK: 12,
-        AnimationPart.BACK_CLOAK: 13,
-    })
-    NE = ("NE", {
-        AnimationPart.BACK_PAULDRON: 1,
-        AnimationPart.BACK_CLOAK: 2,
-        AnimationPart.BACK_ARM: 3,
-        AnimationPart.BACK_TASSET: 4,
-        AnimationPart.BACK_LEG: 5,
-        AnimationPart.HIP: 6,
-        AnimationPart.FRONT_LEG: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_TASSET: 9,
-        AnimationPart.FRONT_ARM: 10,
-        AnimationPart.HEAD: 11,
-        AnimationPart.FRONT_PAULDRON: 12,
-        AnimationPart.FRONT_CLOAK: 13,
-    })
-    E = ("E", {
-        AnimationPart.BACK_PAULDRON: 1,
-        AnimationPart.BACK_CLOAK: 2,
-        AnimationPart.BACK_ARM: 3,
-        AnimationPart.BACK_TASSET: 4,
-        AnimationPart.BACK_LEG: 5,
-        AnimationPart.HIP: 6,
-        AnimationPart.FRONT_LEG: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_TASSET: 9,
-        AnimationPart.HEAD: 10,
-        AnimationPart.FRONT_ARM: 11,
-        AnimationPart.FRONT_PAULDRON: 12,
-        AnimationPart.FRONT_CLOAK: 13,
-    })
-    SE = ("SE", {
-        AnimationPart.BACK_CLOAK: 1,
-        AnimationPart.BACK_PAULDRON: 2,
-        AnimationPart.BACK_ARM: 3,
-        AnimationPart.BACK_LEG: 4,
-        AnimationPart.BACK_TASSET: 5,
-        AnimationPart.HIP: 6,
-        AnimationPart.FRONT_LEG: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_TASSET: 9,
-        AnimationPart.FRONT_ARM: 10,
-        AnimationPart.FRONT_PAULDRON: 11,
-        AnimationPart.HEAD: 12,
-        AnimationPart.FRONT_CLOAK: 13,
-    })
-    S = ("S", {
-        AnimationPart.FRONT_CLOAK: 1,
-        AnimationPart.BACK_CLOAK: 2,
-        AnimationPart.FRONT_LEG: 3,
-        AnimationPart.BACK_LEG: 4,
-        AnimationPart.HIP: 5,
-        AnimationPart.FRONT_TASSET: 6,
-        AnimationPart.BACK_TASSET: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_ARM: 9,
-        AnimationPart.BACK_ARM: 10,
-        AnimationPart.FRONT_PAULDRON: 11,
-        AnimationPart.BACK_PAULDRON: 12,
-        AnimationPart.HEAD: 13,
-    })
-    SW = ("SW", {
-        AnimationPart.BACK_CLOAK: 1,
-        AnimationPart.BACK_PAULDRON: 2,
-        AnimationPart.BACK_ARM: 3,
-        AnimationPart.BACK_LEG: 4,
-        AnimationPart.BACK_TASSET: 5,
-        AnimationPart.HIP: 6,
-        AnimationPart.FRONT_LEG: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_TASSET: 9,
-        AnimationPart.FRONT_ARM: 10,
-        AnimationPart.FRONT_PAULDRON: 11,
-        AnimationPart.HEAD: 12,
-        AnimationPart.FRONT_CLOAK: 13,
-    })
-    W = ("W", {
-        AnimationPart.BACK_PAULDRON: 1,
-        AnimationPart.BACK_CLOAK: 2,
-        AnimationPart.BACK_ARM: 3,
-        AnimationPart.BACK_TASSET: 4,
-        AnimationPart.BACK_LEG: 5,
-        AnimationPart.HIP: 6,
-        AnimationPart.FRONT_LEG: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_TASSET: 9,
-        AnimationPart.HEAD: 10,
-        AnimationPart.FRONT_ARM: 11,
-        AnimationPart.FRONT_PAULDRON: 12,
-        AnimationPart.FRONT_CLOAK: 13,
-    })
-    NW = ("NW", {
-        AnimationPart.BACK_PAULDRON: 1,
-        AnimationPart.BACK_CLOAK: 2,
-        AnimationPart.BACK_ARM: 3,
-        AnimationPart.BACK_TASSET: 4,
-        AnimationPart.BACK_LEG: 5,
-        AnimationPart.HIP: 6,
-        AnimationPart.FRONT_LEG: 7,
-        AnimationPart.TORSO: 8,
-        AnimationPart.FRONT_TASSET: 9,
-        AnimationPart.FRONT_ARM: 10,
-        AnimationPart.HEAD: 11,
-        AnimationPart.FRONT_PAULDRON: 12,
-        AnimationPart.FRONT_CLOAK: 13,
-    })
-
-    def __new__(cls, direction, layer_priority):
-        obj = object.__new__(cls)
-        obj._value_ = direction
-        obj.layer_priority = layer_priority
-        return obj
-
-    def get_layer_priority(self):
-        return self.layer_priority
-
-
-class Animation(Sprite):
-    def __init__(self, direction: str, action: str, animation_time: int , file_location: list[str],
-                 max_frames: int, pygame_prop: list[dict]):
-        self.direction = direction
-        self.action = action
-        self.animation_time = animation_time # speed can maybe change need to look into it
-        self.max_frames = max_frames
-
-        # file location only holds the file locations
-        self.file_location = file_location
-        self.pygame_prop = pygame_prop
-
-        # using this to call the frames and associate with pygame
-        animation_list = []
-        for file in file_location:
-            part_image = pygame.image.load(file).convert_alpha()
-            animation_list.append(part_image)
-
-
-        self.body_part_animation_list = list
-
-    def getFrame(self, frame_number):
-        return self.body_part_animation_list[frame_number]
-
-    def setAnimationList(self, animationList):
-        self.body_part_animation_list = animationList
-
-    def update_animation(self):
-        pass
+"""PygameProp contains the pygame transformation data that is associated with
+each sprite associated with the individual parts"""
+@dataclass
+class PygameProp:
+    x: float = 0
+    y: float = 0
+    scale: tuple = (1.0, 1.0)
+    rotation: float = 0
+    h_flip: bool = False
+    v_flip: bool = False
+    center: tuple = (0, 0)
 
     def to_dict(self):
         return {
-            "direction": self.direction,
-            "part": self.part,
-            "action": self.action,
-            "animation_time": self.animation_time,
+            "x": self.x,
+            "y": self.y,
+            "scale": tuple(self.scale),
+            "rotation": self.rotation,
+            "h_flip": self.h_flip,
+            "v_flip": self.v_flip,
+            "center": tuple(self.center),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(x=d.get("x", 0),
+                   y=d.get("y", 0),
+                   scale=tuple(d.get("scale", (1, 1))),
+                   rotation=d.get("rotation", 0),
+                   h_flip=d.get("h_flip", False),
+                   v_flip=d.get("v_flip", False),
+                   center=tuple(d.get("center", (0, 0))),
+                   )
+
+
+"""the Individual sprites that are the different parts on the character"""
+@dataclass
+class SpriteData(PygameProp):
+    part: AnimationPart = AnimationPart.HEAD
+    file_location: str = ""
+    props: PygameProp = field(default_factory=PygameProp)
+
+    image = None
+    if file_location != "":
+        image = pygame.image.load(file_location)
+
+    def to_dict(self):
+        return {
+            "part": self.part.value,
             "file_location": self.file_location,
-            #needs more here still organizing
+            "properties": self.props.to_dict()
         }
 
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(part=AnimationPart(d["part"]),
+                   file_location=d["file_location"],
+                   props=PygameProp.from_dict(d.get("properties", {})),
+                   )
 
-class AnimationStack:
-    def __init__(self):
 
-        # will be a directory for all the possible animations
-        # direction will contain actions that will be called knowing the direction state
-        # actions be chosen from player input or lack of input
-        # the part will contain the animation associated with the part
-        self.animationList = {}
-
-        #create the Dictionary paths
-        for direction in SpriteDirection:
-            self.animationList[direction.direction] = {}
-
-            for action in Action:
-                self.animationList[direction.direction][action.value] = {}
-
-                for part in AnimationPart:
-                    self.animationList[direction.direction][action.value][part] = Animation
-
-    def addAnimation(self, direction, animation):
-        pass
+"""The whole picture where everything comes together for a single frame"""
+@dataclass
+class Frame(PygameProp):
+    # layer order is based on where the sprite is on the sprite list
+    sprites: list[SpriteData] = field(default_factory=list)
+    time_to_next_frame: int = 100
 
     def to_dict(self):
         return {
-           direction: {
-               part: animatiob.to_dict() for part, animatiob in self.animationList.items()
-           }
-            for direction, parts in self.animationList.items()
-
+            "time_to_next_frame": self.time_to_next_frame,
+            "sprites": [s.to_dict() for s in self.sprites],
         }
 
-    def export(self, filePath):
-        ExporterFactory.createExporter(filePath)
-
-    def load(self, data_file):
-        pass # will create the Animation stack from JSON file
-
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(sprites=[SpriteData.from_dict(s) for s in d.get("sprites", [])],
+                   time_to_next_frame=d.get("time_to_next_frame", 100))
 
 
 
 
+"""contains every possible action that a NPC or Character should be able to do"""
+@dataclass
+class AnimationStack:
+
+
+    # Every direction contains a dict of actions and actions contains list of frames
+    animations: dict = field(
+        default_factory=lambda: {
+            direction: {
+                action: [] for action in Action
+            }
+            for direction in SpriteDirection
+        }
+    )
+
+
+    def add_frame(
+            self,
+            frame: Frame,
+            action: Action,
+            direction: SpriteDirection
+    ):
+        self.animations[direction][action].append(frame)
+
+    def to_dict(self):
+        return {
+            direction.value: {
+                action.value: [
+                    frame.to_dict() for frame in frames
+                ]
+                for action, frames in actions.items()
+            }
+            for direction, actions in self.animations.items()
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        stack = cls()
+        for direction in SpriteDirection:
+            for action in Action:
+                raw = data.get(direction.value, {}).get(action.value, [])
+                stack.animations[direction][action] = [Frame.from_dict(f) for f in raw]
+        return stack
+
+    def load_animations(self, filename: str):
+        data = ParserFactory.create_parser("json").parse_file(filename)
+        self.animations = AnimationStack.from_dict(data).animations
+
+    def export_to_json(self, name: str):
+        path = dp.get_dir(dp.ANIMATION) / f"{name}.json"
+        ExporterFactory.get_exporter("json").export(data=self.to_dict(), file_name=path)
