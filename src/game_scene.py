@@ -48,7 +48,7 @@ TILE_MAP = [
 
 TILESET = TileSet({
     Tile.VOID: TileType("void"),
-    Tile.Water: TileType("water", "Watertile.png", walkable=False),
+    Tile.Water: TileType("water", "WaterTile.png", walkable=False),
     Tile.GRASS_CLEAN: TileType("grass", "Grass_Clean_Tile.png", walkable=True),
     Tile.LIGHT_DIRT: TileType("light", "Light_Dirt_Tile.png", walkable=True),
     Tile.MED_DIRT: TileType("med", "Med_Dirt_Tile.png", walkable=True),
