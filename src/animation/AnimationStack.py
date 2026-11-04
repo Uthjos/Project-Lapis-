@@ -1,6 +1,6 @@
+import json
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 
 from src.data_file_manage.DirectoryPath import DirectoryPath as dp
 from src.data_file_manage.ExporterFactory import ExporterFactory
@@ -71,16 +71,16 @@ class PygameProp:
             "center": tuple(self.center),
         }
 
-    def load(self, data: dict):
-        self.x = data["x"]
-        self.y = data["y"]
-        self.scale = data["scale"]
-        self.rotation = data["rotation"]
-        self.h_flip = data["h_flip"]
-        self.v_flip = data["v_flip"]
-        self.center = data["center"]
-
-        return self
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(x=d.get("x", 0),
+                   y=d.get("y", 0),
+                   scale=tuple(d.get("scale", (1, 1))),
+                   rotation=d.get("rotation", 0),
+                   h_flip=d.get("h_flip", False),
+                   v_flip=d.get("v_flip", False),
+                   center=tuple(d.get("center", (0, 0))),
+                   )
 
 
 """the Individual sprites that are the different parts on the character"""
@@ -88,50 +88,41 @@ class PygameProp:
 class SpriteData(PygameProp):
     part: AnimationPart = AnimationPart.HEAD
     file_location: str = ""
+    props: PygameProp = field(default_factory=PygameProp)
 
     def to_dict(self):
         return {
-            "part": self.part,
+            "part": self.part.value,
             "file_location": self.file_location,
-            "properties": super().to_dict()
+            "properties": self.props.to_dict()
         }
 
-    def load(self, data: dict):
-        self.part = data["part"]
-        self.file_location = data["file_location"]
-        super().load(data)
-        return self
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(part=AnimationPart(d["part"]),
+                   file_location=d["file_location"],
+                   props=PygameProp.from_dict(d.get("properties", {})),
+                   )
 
 
 """The whole picture where everything comes together for a single frame"""
 @dataclass
 class Frame(PygameProp):
-    frame_number: int = 0
-
     # layer order is based on where the sprite is on the sprite list
     sprites: list[SpriteData] = field(default_factory=list)
     time_to_next_frame: int = 100
 
     def to_dict(self):
         return {
-            "frame_number": self.frame_number,
             "time_to_next_frame": self.time_to_next_frame,
-            "sprites": [
-                sprite.to_dict() for sprite in self.sprites
-            ],
+            "sprites": [s.to_dict() for s in self.sprites],
         }
 
-    def load(self, data: dict):
-        self.frame_number = data["frame_number"]
-        self.time_to_next_frame = data["time_to_next_frame"]
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(sprites=[SpriteData.from_dict(s) for s in d.get("sprites", [])],
+                   time_to_next_frame=d.get("time_to_next_frame", 100))
 
-        self.sprites.clear()
-
-        for s in data["sprites"]:
-            sprite = SpriteData().load(s)
-            self.sprites.append(sprite)
-
-        return self
 
 
 
@@ -170,32 +161,19 @@ class AnimationStack:
             for direction, actions in self.animations.items()
         }
 
-    def export_to_json(self, name: str):
-        name_ext = name + ".json"
-        path = (
-            dp.get_dir(dp.ANIMATION) / Path(name_ext)
-        )
-
-        ExporterFactory.createExporter('json').export(data=self.to_dict(), fileName=path)
+    @classmethod
+    def from_dict(cls, data: dict):
+        stack = cls()
+        for direction in SpriteDirection:
+            for action in Action:
+                raw = data.get(direction.value, {}).get(action.value, [])
+                stack.animations[direction][action] = [Frame.from_dict(f) for f in raw]
+        return stack
 
     def load_animations(self, filename: str):
         data = ParserFactory.create_parser("json").parse_file(filename)
+        self.animations = AnimationStack.from_dict(data).animations
 
-        self.animations = {
-            direction: {
-                action: [
-                    Frame().load(frame_data)
-                    for frame_data in data.get(direction.value, {}).get(
-                        action.value, []
-                    )
-                ]
-                for action in Action
-            }
-            for direction in SpriteDirection
-        }
-
-
-if __name__ == "__main__":
-    test = AnimationStack()
-
-    test.export_to_json("test")
+    def export_to_json(self, name: str):
+        path = dp.get_dir(dp.ANIMATION) / f"{name}.json"
+        ExporterFactory.get_exporter("json").export(data=self.to_dict(), file_name=path)

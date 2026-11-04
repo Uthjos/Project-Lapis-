@@ -3,17 +3,14 @@ from .JSONExporter import JSONExporter
 
 
 class ExporterFactory:
-    @staticmethod
-    def createExporter(format: str) -> Exporter:
-
+    def __init__(self):
         # add different file formats here
-        exporters = {
-            "json": JSONExporter
-        }
+        _exporters = {"json": JSONExporter}
 
-        exporter_class = exporters.get(format.lower())
 
-        if exporter_class is None:
+    @classmethod
+    def get_exporter(cls, format: str) -> type[AbstractExporter]:
+        exporter = cls._exporters(format.lower())
+        if exporter is None:
             raise ValueError(f"Unknown exporter {format}")
-
-        return exporter_class
+        return exporter
