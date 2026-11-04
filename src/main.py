@@ -9,8 +9,8 @@ from src.iso_math.IsoGrid import IsoGrid
 from src.iso_math.TileSet import Tile, TileSet, TileType
 from src.object_class.Character import Character
 from src.object_class.Item import Item
-from src.ui.InventoryUI import InventoryUI
 from src.object_class.WeaponFactory import WeaponFactory
+from src.ui.InventoryUI import InventoryUI
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
