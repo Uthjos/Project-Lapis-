@@ -1,7 +1,8 @@
-import pygame
 from pathlib import Path
 
-from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT
+import pygame
+
+from src.settings import SCREEN_HEIGHT, SCREEN_WIDTH
 
 pygame.init()
 

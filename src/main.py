@@ -9,8 +9,7 @@ import pygame
 from src.game_scene import main_game
 from src.main_menu_scene import main_menu
 from src.scenes import Scene
-from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT
-from src.main_menu_scene import main_menu
+from src.settings import SCREEN_HEIGHT, SCREEN_WIDTH
 
 SCENES = {
     Scene.MENU: main_menu,
