@@ -1,5 +1,6 @@
 import math
 from enum import Enum, auto
+
 from src.object_class.Entity import Entity
 
 
@@ -51,8 +52,7 @@ class Enemy(Entity):
                     player.take_damage(self.damage)
                 self._set_state(EnemyState.COOLDOWN, now)
 
-        elif self.state == EnemyState.COOLDOWN:
-            if now - self.state_start >= self.cooldown_ms:
+        elif self.state == EnemyState.COOLDOWN and now - self.state_start >= self.cooldown_ms :
                 self._set_state(EnemyState.CHASE, now)
 
     def _set_state(self, state, now):

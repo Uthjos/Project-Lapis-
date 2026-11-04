@@ -1,7 +1,9 @@
+import math
+
 import pygame
 
 from src.object_class.Item import Item
-import math
+
 
 # Weapon class extends Item with weapon-specific stats
 class Weapon(Item):

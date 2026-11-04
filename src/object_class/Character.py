@@ -3,6 +3,7 @@ from src.object_class.Entity import Entity
 from src.object_class.Inventory import Inventory
 from src.object_class.Weapon import Weapon
 
+
 class Character(Entity):
     def __init__(self, x=0, y=0, health=100):
         super().__init__(x, y, health)
