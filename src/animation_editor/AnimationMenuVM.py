@@ -13,3 +13,4 @@ class AnimationMenuVM:
         # no need to convert since it is going to be passed through to CustomTkinter
         image = pygame.image.load(str(filename))
         return image
+
