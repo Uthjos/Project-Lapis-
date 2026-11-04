@@ -29,9 +29,9 @@ class DirectoryPath(Enum):
 
     """Use this to call the Directory paths"""
     @staticmethod
-    def get_dir(dirpath: DirectoryPath) -> DirectoryPath:
+    def get_dir(dirpath: DirectoryPath) -> Path:
         DirectoryPath._make_dir(dirpath)
-        return dirpath
+        return dirpath.value
 
 if __name__ == '__main__':
     sprite_dir = DirectoryPath.get_dir(DirectoryPath.SPRITE)

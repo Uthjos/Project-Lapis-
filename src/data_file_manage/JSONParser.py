@@ -1,14 +1,10 @@
 import json
+from pathlib import Path
 
 
 class Parser:
-
-    # acts as an initializer as this class does not have stored data
-    def __init__(self):
-        pass
-
     @staticmethod
-    def parse_file(file_path):
-        with open(file_path) as json_file:
+    def parse_file(file_path: str | Path) -> dict:
+        with open(file_path, "r", encoding="utf-8") as json_file:
             data = json.load(json_file)
             return data

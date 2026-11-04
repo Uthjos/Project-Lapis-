@@ -1,9 +1,14 @@
 import json
+from pathlib import Path
+
+from .Exporter import AbstractExporter
 
 
-class JSONExporter:
-    def export(self, data, fileName: str):
-        json_data = json.dumps(data, indent=4)
+class JSONExporter(AbstractExporter):
+    @staticmethod
+    def export(data, fileName) -> None:
+        path = Path(fileName)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(fileName, 'w') as outfile:
-            outfile.write(json_data)
+        with open(fileName, 'w', encoding="utf-8") as outfile:
+            json.dump(data, outfile, indent=4)
