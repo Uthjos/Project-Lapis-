@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
+import pygame
+
 from src.data_file_manage.DirectoryPath import DirectoryPath as dp
 from src.data_file_manage.ExporterFactory import ExporterFactory
 from src.data_file_manage.ParserFactory import ParserFactory
@@ -89,6 +91,10 @@ class SpriteData(PygameProp):
     part: AnimationPart = AnimationPart.HEAD
     file_location: str = ""
     props: PygameProp = field(default_factory=PygameProp)
+
+    image = None
+    if file_location != "":
+        image = pygame.image.load(file_location)
 
     def to_dict(self):
         return {
