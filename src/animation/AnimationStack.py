@@ -35,6 +35,7 @@ class Action(Enum):
     STUNNED = "stunned"
     THROW_ONE_HANDED = "throw_one_handed"
     THROW_TWO_HANDED = "throw_two_handed"
+    JUMP = "jump"
 
 
 class SpriteDirection(Enum):
