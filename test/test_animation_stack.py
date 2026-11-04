@@ -1,7 +1,17 @@
-from animation.AnimationStack import *
+import json
+
+from src.animation.AnimationStack import (
+    Action,
+    AnimationPart,
+    AnimationStack,
+    Frame,
+    PygameProp,
+    SpriteData,
+    SpriteDirection,
+)
 
 
-def test_roundtrip():
+def test_animation_stack_roundtrip():
     stack = AnimationStack()
     stack.add_frame(
         Frame(sprites=[SpriteData(part=AnimationPart.TORSO,
