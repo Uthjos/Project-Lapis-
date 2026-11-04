@@ -4,14 +4,14 @@
     "name": "Rusty Sword",
     "damage": 10,
     "attack_speed": 1.0,
-    "range": 2,
+    "range": 40,
     "description": "A basic starting weapon."
   },
   "iron_sword": {
     "name": "Iron Sword",
     "damage": 15,
     "attack_speed": 1.2,
-    "range": 2,
+    "range": 40,
     "description": "A stronger sword."
   }
 }

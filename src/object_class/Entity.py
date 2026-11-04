@@ -5,6 +5,7 @@ class Entity:
     def __init__(self, x=0, y=0, health=100):
         self.x, self.y = x, y
         self.health = health
+        self.max_health = health
         self.hurtbox = Rect(0, 0, 32, 32)          # body: where this entity can be hit
         self.movement_hitbox = Rect(0, 0, 32, 16)  # feet: used for terrain collision
         self.collision_map = None

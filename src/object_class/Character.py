@@ -1,3 +1,5 @@
+import math
+
 from src.animation.AnimationStack import Action, SpriteDirection
 from src.object_class.Entity import Entity
 from src.object_class.Inventory import Inventory
@@ -12,6 +14,7 @@ class Character(Entity):
         self.inventory = Inventory()
         self.equipped_item = None
         self.facing = (1, 0)
+        self.last_attack_time = -math.inf
 
     def move(self, x, y):
         # One axis at a time so the character slides along edges instead of sticking
@@ -35,6 +38,8 @@ class Character(Entity):
         weapon = self.equipped_item
         if not isinstance(weapon, Weapon) or not weapon.use(now):
             return []
+
+        self.last_attack_time = now
 
         hitbox = weapon.attack_rect(self.hurtbox.center, self.facing)
         hits = []

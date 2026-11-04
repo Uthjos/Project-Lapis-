@@ -1,6 +1,8 @@
 import math
 from enum import Enum, auto
 
+import pygame
+
 from src.object_class.Entity import Entity
 
 
@@ -9,12 +11,15 @@ class EnemyState(Enum):
     CHASE = auto()
     WINDUP = auto()
     COOLDOWN = auto()
+    HURT = auto()    # staggered by a hit; interrupts an attack
+    DEAD = auto()
 
 
 class Enemy(Entity):
     def __init__(self, x, y, health=50, speed=1.5, damage=10,
                  aggro_range=250, attack_range=36,
-                 windup_ms=400, cooldown_ms=1000):
+                 windup_ms=400, cooldown_ms=1000,
+                 hurt_ms=0, death_ms=0):
         super().__init__(x, y, health)
         self.speed = speed
         self.damage = damage
@@ -22,12 +27,34 @@ class Enemy(Entity):
         self.attack_range = attack_range
         self.windup_ms = windup_ms
         self.cooldown_ms = cooldown_ms
+        self.hurt_ms = hurt_ms      # stagger time after a hit (0 = never staggers)
+        self.death_ms = death_ms    # how long the body lingers before it can be removed
 
         self.state = EnemyState.IDLE
         self.state_start = 0
+        self._now = 0               # last time passed to update(), so damage can stamp state changes
+
+    @property
+    def removable(self):
+        """True once the enemy is dead and its death animation/linger time is over."""
+        return self.state == EnemyState.DEAD and self._now - self.state_start >= self.death_ms
+
+    def take_damage(self, damage):
+        if self.state == EnemyState.DEAD:
+            return
+        super().take_damage(damage)
+        if not self.is_alive():
+            self._set_state(EnemyState.DEAD, self._now)
+        elif self.hurt_ms > 0:
+            self._set_state(EnemyState.HURT, self._now)
+
+    def draw(self, surface):
+        """Fallback so a plain Enemy is visible; subclasses draw their sprites."""
+        pygame.draw.rect(surface, (200, 50, 50), self.hurtbox, width=2)
 
     # Enemy AI
     def update(self, player, now):
+        self._now = now
         if not self.is_alive():
             return
 
@@ -51,6 +78,10 @@ class Enemy(Entity):
                 if player.is_alive() and self._distance_to(player) <= self.attack_range * 1.25:
                     player.take_damage(self.damage)
                 self._set_state(EnemyState.COOLDOWN, now)
+
+        elif self.state == EnemyState.HURT:
+            if now - self.state_start >= self.hurt_ms:
+                self._set_state(EnemyState.CHASE, now)
 
         elif self.state == EnemyState.COOLDOWN and now - self.state_start >= self.cooldown_ms :
                 self._set_state(EnemyState.CHASE, now)
