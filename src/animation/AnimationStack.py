@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
+from src.data_file_manage.DirectoryPath import DirectoryPath
+from src.data_file_manage.ExporterFactory import ExporterFactory
+
 
 class AnimationPart(Enum):
     BACK_ARM = "back_arm"
@@ -116,3 +119,9 @@ class AnimationStack:
             ]
             for action, frames in self.animations.items()
         }
+
+    def export_to_json(self):
+        ExporterFactory.createExporter('json')(
+            data=self.to_dict(),
+            filename=str(DirectoryPath.get_dir(DirectoryPath.SPRITE))
+        )

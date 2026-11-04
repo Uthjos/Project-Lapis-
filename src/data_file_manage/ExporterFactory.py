@@ -1,9 +1,9 @@
-from src.data_file_manage import JSONExporter
+from src.data_file_manage import Exporter, JSONExporter
 
 
 class ExporterFactory:
     @staticmethod
-    def createExporter(format: str):
+    def createExporter(format: str) -> Exporter:
 
         # add different file formats here
         exporters = {
