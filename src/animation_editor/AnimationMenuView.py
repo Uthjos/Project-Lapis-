@@ -9,11 +9,8 @@ from tkinter import filedialog
 
 import customtkinter as ctk
 import pygame
-from PIL import Image, ImageTk
-
 from AnimationMenuVM import AnimationMenuVM as amvm
-
-
+from PIL import Image, ImageTk
 
 WIDTH, HEIGHT = 600, 600        # size of pygem render surface
 ZOOM = 1                        # integer magnification when shown in Tk

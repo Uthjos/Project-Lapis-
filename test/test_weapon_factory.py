@@ -13,7 +13,7 @@ def test_weapon_creation():
     assert sword.name == "Rusty Sword"
     assert sword.damage == 10
     assert sword.attack_speed == 1.0
-    assert sword.range == 2
+    assert sword.range >=32 #bigger than body of player
 
 
 def test_invalid_weapon():
