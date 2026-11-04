@@ -5,13 +5,10 @@ import pygame
 from src.iso_math.IsoGrid import IsoGrid
 from src.iso_math.TileSet import Tile, TileSet, TileType
 from src.object_class.Character import Character
-from src.object_class.Item import Item
 from src.object_class.Slime import Slime
-from src.object_class.WeaponFactory import WeaponFactory
+from src.object_class.StartingItems import give_starting_items
 from src.scenes import Scene
 from src.ui.InventoryUI import InventoryUI
-from src.object_class.StartingItems import give_starting_items
-
 
 PLAYER_SPEED = 3
 ATTACK_DURATION = 2000
