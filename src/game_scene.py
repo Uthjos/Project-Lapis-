@@ -14,7 +14,7 @@ from src.ui.InventoryUI import InventoryUI
 PLAYER_SPEED = 3
 ATTACK_DURATION = 2000
 FPS = 60
-DEBUG_OVERLAY = True
+DEBUG_OVERLAY = False
 
 SPRITE_DIR = Path(__file__).resolve().parent / "assets" / "sprites"
 TILE_DIR = Path(__file__).resolve().parent / "assets" / "tiles"
