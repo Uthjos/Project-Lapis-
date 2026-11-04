@@ -10,6 +10,8 @@ from src.object_class.Slime import Slime
 from src.object_class.WeaponFactory import WeaponFactory
 from src.scenes import Scene
 from src.ui.InventoryUI import InventoryUI
+from src.object_class.StartingItems import give_starting_items
+
 
 PLAYER_SPEED = 3
 ATTACK_DURATION = 2000
@@ -119,12 +121,10 @@ def main_game(screen):
     player.set_collision_map(grid)
     slash_image = pygame.image.load(str(ACTIONS_DIR / "test_slash_reference.png")).convert_alpha()
 
-    # Temporary sample items.
-    weapon_factory = WeaponFactory()
-    rusty_sword = weapon_factory.create_weapon("rusty_sword")
-    player.inventory.add_item(rusty_sword)
-    player.equip_item(rusty_sword)   # starts equipped so Space works immediately
-    player.inventory.add_item(Item("Health Potion", "consumable", "Restores health when used."))
+    # gives player starting itemss
+    give_starting_items(player)
+
+
     inventory_ui = InventoryUI(player.inventory, player)
     inventory_open = False
     facing_right = True

@@ -14,4 +14,5 @@ def give_starting_items(player):
 
     # Add both items to the inventory
     player.inventory.add_item(sword)
+    player.equip_item(sword)
     player.inventory.add_item(potion)
