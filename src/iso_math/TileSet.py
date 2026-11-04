@@ -7,10 +7,17 @@ import pygame
 class Tile(IntEnum):
     """Named IDs for the numbers in TILE_MAP. IntEnum members still equal plain ints."""
     VOID = 0
-    FLOOR = 1
+    GRASS_CLEAN = 1
     WALL = 2
     PATH = 3
     Water = 4
+    LIGHT_DIRT = 6
+    MED_DIRT = 7
+    DARK_DIRT = 8
+    SMALL_ROCK = 9
+    MEDIUM_ROCK = 10
+    LARGE_ROCK = 11
+
 
 
 @dataclass(frozen=True)
@@ -29,7 +36,7 @@ class TileSet:
         self.textures: dict[int, pygame.Surface] = {}
         self.tile_size = (0, 0)   # size of the base (floor) tile, used for grid math
 
-    def load(self, loader, scale=1, base_id=Tile.FLOOR):
+    def load(self, loader, scale=1, base_id=Tile.GRASS_CLEAN):
         """Load and scale every texture. Call after pygame.display.set_mode()."""
         for tile_id, t in self.types.items():
             if t.texture_file:
