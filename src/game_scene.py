@@ -5,6 +5,7 @@ import pygame
 from src.iso_math.IsoGrid import IsoGrid
 from src.iso_math.TileSet import Tile, TileSet, TileType
 from src.object_class.Character import Character
+from src.object_class.Enemy import Enemy
 from src.object_class.Item import Item
 from src.object_class.WeaponFactory import WeaponFactory
 from src.scenes import Scene
@@ -47,6 +48,12 @@ TILESET = TileSet({
     Tile.LARGE_ROCK: TileType("large_rock", "Large_Rock_Tile.png", walkable=False),
 })
 
+def generate_enemies(n_enemies):
+    enemies_list = []
+    for i in range(n_enemies):
+        new_enemy = Enemy(400,400,50,damage= 5)
+        enemies_list.append(new_enemy)
+    return enemies_list
 
 def load_sprite(filename):
     """Needs the display to exist (convert_alpha)."""
@@ -79,7 +86,7 @@ def main_game(screen):
     inventory_ui = InventoryUI(player.inventory, player)
     inventory_open = False
     facing_right = True
-    enemies=[]
+    enemies=generate_enemies(2)
 
     while True:
         clock.tick(FPS)
@@ -111,7 +118,7 @@ def main_game(screen):
             if keys[pygame.K_d]:
                 player.move(PLAYER_SPEED, 0)
                 facing_right = True
-            
+
             if keys[pygame.K_w]: player.move(0, -PLAYER_SPEED); player.facing = (0, -1)
             if keys[pygame.K_s]: player.move(0, PLAYER_SPEED);  player.facing = (0, 1)
             if keys[pygame.K_a]: player.move(-PLAYER_SPEED, 0); player.facing = (-1, 0); facing_right = False

@@ -26,7 +26,7 @@ class Enemy(Entity):
         self.state = EnemyState.IDLE
         self.state_start = 0
 
-    # ---------- AI ----------
+    # Enemy AI
     def update(self, player, now):
         if not self.is_alive():
             return
