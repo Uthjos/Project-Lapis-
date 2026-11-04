@@ -6,12 +6,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 import pygame
 
-from src.Game_Scene import main_game
-from src.Main_Menu_Scene import main_menu
-from src.Scenes import Scene
-
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+from src.game_scene import main_game
+from src.main_menu_scene import main_menu
+from src.scenes import Scene
+from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT
+from src.main_menu_scene import main_menu
 
 SCENES = {
     Scene.MENU: main_menu,
