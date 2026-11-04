@@ -1,4 +1,5 @@
-from src.data_file_manage import Exporter, JSONExporter
+from .Exporter import AbstractExporter
+from .JSONExporter import JSONExporter
 
 
 class ExporterFactory:

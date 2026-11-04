@@ -1,9 +1,10 @@
 import json
 
+from .Exporter import AbstractExporter
 
-class JSONExporter:
-    def export(self, data, fileName: str):
-        json_data = json.dumps(data, indent=4)
 
-        with open(fileName, 'w') as outfile:
-            outfile.write(json_data)
+class JSONExporter(AbstractExporter):
+    @staticmethod
+    def export(data, fileName: str):
+        with open(fileName, 'w', encoding="utf-8") as outfile:
+            json.dump(data, outfile, indent=4)
