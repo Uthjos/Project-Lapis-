@@ -131,7 +131,81 @@ def test_main_game_returns_quit_on_window_close(screen):
     assert main_game(screen) == Scene.QUIT
 
 
-def test_main_game_escape_returns_to_menu(screen):
-    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+def feed_events(monkeypatch, frames):
+    """pygame.event.get() returns one list of events per frame, then QUIT forever."""
+    frames = iter(frames)
+    monkeypatch.setattr(pygame.event, "get",
+                        lambda: next(frames, [pygame.event.Event(pygame.QUIT)]))
 
-    assert main_game(screen) == Scene.MENU
+
+def key(k):
+    return pygame.event.Event(pygame.KEYDOWN, key=k)
+
+
+def test_escape_opens_pause_menu_instead_of_leaving(screen, monkeypatch):
+    # Esc must not return to the menu any more; the loop keeps running until QUIT.
+    feed_events(monkeypatch, [[key(pygame.K_ESCAPE)], []])
+
+    assert main_game(screen) == Scene.QUIT
+
+
+def test_pause_menu_quit_button_quits(screen, monkeypatch):
+    # Esc opens the pause menu, Down selects Quit, Enter confirms.
+    feed_events(monkeypatch, [[key(pygame.K_ESCAPE)], [key(pygame.K_DOWN)],
+                              [key(pygame.K_RETURN)]])
+    result = main_game(screen)
+
+    assert result == Scene.QUIT
+
+
+def test_pause_menu_continue_resumes_game(screen, monkeypatch):
+    calls = {"n": 0}
+    frames = [[key(pygame.K_ESCAPE)], [key(pygame.K_RETURN)], [], []]
+
+    def fake_get():
+        calls["n"] += 1
+        return frames[calls["n"] - 1] if calls["n"] <= len(frames) else [pygame.event.Event(pygame.QUIT)]
+
+    monkeypatch.setattr(pygame.event, "get", fake_get)
+
+    assert main_game(screen) == Scene.QUIT
+    # Loop kept running after Continue instead of exiting on it.
+    assert calls["n"] == len(frames) + 1
+
+
+def test_escape_closes_pause_menu(screen, monkeypatch):
+    calls = {"n": 0}
+    frames = [[key(pygame.K_ESCAPE)], [key(pygame.K_ESCAPE)], []]
+
+    def fake_get():
+        calls["n"] += 1
+        return frames[calls["n"] - 1] if calls["n"] <= len(frames) else [pygame.event.Event(pygame.QUIT)]
+
+    monkeypatch.setattr(pygame.event, "get", fake_get)
+
+    assert main_game(screen) == Scene.QUIT
+    assert calls["n"] == len(frames) + 1
+
+
+def test_escape_closes_inventory_before_opening_pause(screen, monkeypatch):
+    # I opens inventory, Esc closes it (no pause menu), second Esc opens pause,
+    # then Down+Enter picks Quit.
+    feed_events(monkeypatch, [[key(pygame.K_i)], [key(pygame.K_ESCAPE)],
+                              [key(pygame.K_ESCAPE)], [key(pygame.K_DOWN)],
+                              [key(pygame.K_RETURN)]])
+
+    assert main_game(screen) == Scene.QUIT
+
+
+def test_inventory_key_ignored_while_paused(screen, monkeypatch):
+    # With the pause menu open, I must not open the inventory; Enter hits Continue.
+    calls = {"n": 0}
+    frames = [[key(pygame.K_ESCAPE)], [key(pygame.K_i)], [key(pygame.K_RETURN)], []]
+
+    def fake_get():
+        calls["n"] += 1
+        return frames[calls["n"] - 1] if calls["n"] <= len(frames) else [pygame.event.Event(pygame.QUIT)]
+
+    monkeypatch.setattr(pygame.event, "get", fake_get)
+
+    assert main_game(screen) == Scene.QUIT

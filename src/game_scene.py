@@ -7,6 +7,7 @@ from src.iso_math.TileSet import Tile, TileSet, TileType
 from src.object_class.Character import Character
 from src.object_class.Slime import Slime
 from src.object_class.StartingItems import give_starting_items
+from src.pause_menu import PauseAction, PauseMenu
 from src.scenes import Scene
 from src.ui.InventoryUI import InventoryUI
 
@@ -18,7 +19,7 @@ DEBUG_OVERLAY = False
 SPRITE_DIR = Path(__file__).resolve().parent / "assets" / "sprites"
 TILE_DIR = Path(__file__).resolve().parent / "assets" / "tiles"
 SLIME_DIR = SPRITE_DIR / "Crypt Slime" / "Sprite Sheets"
-SLIME_SPAWN_TILES = [(2, 6), (7, 5)]   # (row, col) in TILE_MAP; both are walkable grass
+SLIME_SPAWN_TILES = [(2, 6), (7, 5),(3,5),(7,7)]
 
 """
 Slash info will move to weapon
@@ -28,7 +29,7 @@ ACTIONS_DIR = Path(__file__).resolve().parent / "assets" / "actions"
 SLASH_ANGLES = {(1, 0): 0, (0, -1): 90, (-1, 0): 180, (0, 1): 270}
 
 
-BACKGROUND_COLOR = (0, 0, 0)  # shows through wherever the tile map is 0
+BACKGROUND_COLOR = (0, 0, 0)
 TILE_SCALE = 3
 
 # Row 0 is the back of the map (top of the screen); each row's first column is on the left.
@@ -62,7 +63,7 @@ def draw_slash(screen, slash_image, player, now):
     elapsed = now - player.last_attack_time
     if weapon is None or elapsed >= SLASH_MS:
         return
-    rect = weapon.attack_rect(player.hurtbox.center, player.facing)  # same box that deals damage
+    rect = weapon.attack_rect(player.hurtbox.center, player.facing)
     img = pygame.transform.scale(slash_image, rect.size)
     img = pygame.transform.rotate(img, SLASH_ANGLES.get(tuple(player.facing), 0))
     img.set_alpha(int(255 * (1 - elapsed / SLASH_MS)))
@@ -84,8 +85,6 @@ def generate_enemies(grid):
     enemies_list = []
     for row, col in SLIME_SPAWN_TILES:
         cx, cy = grid.tile_center(row, col)
-        # Entity x, y is the top-left of the 32x32 body; the feet box (32x16) ends at y + 32.
-        # Putting the feet 8px below the tile centre keeps all four corners inside the diamond.
         slime = Slime(cx - 16, cy - 24)
         slime.set_collision_map(grid)
         enemies_list.append(slime)
@@ -104,7 +103,7 @@ def load_environment_tile(filename):
 def main_game(screen):
     screen_width, screen_height = screen.get_size()
     clock = pygame.time.Clock()
-    paused_ms = 0   # time spent in the inventory, so enemy and weapon timers freeze while it is open
+    paused_ms = 0   # time spent in the inventory or pause menu, so enemy and weapon timers freeze while open
 
     # Load assets.
     TILESET.load(load_environment_tile, TILE_SCALE)
@@ -118,18 +117,20 @@ def main_game(screen):
     player.set_collision_map(grid)
     slash_image = pygame.image.load(str(ACTIONS_DIR / "test_slash_reference.png")).convert_alpha()
 
-    # gives player starting itemss
+    # gives player starting items
     give_starting_items(player)
 
 
     inventory_ui = InventoryUI(player.inventory, player)
     inventory_open = False
+    pause_menu = PauseMenu()
+    pause_open = False
     facing_right = True
     enemies = generate_enemies(grid)
 
     while True:
         dt = clock.tick(FPS)
-        if inventory_open:
+        if inventory_open or pause_open:
             paused_ms += dt
         now = pygame.time.get_ticks() - paused_ms
 
@@ -140,10 +141,20 @@ def main_game(screen):
             if event.type == pygame.QUIT:
                 return Scene.QUIT
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if inventory_open:
+                # Esc backs out one layer: pause menu -> inventory -> open the pause menu.
+                if pause_open:
+                    pause_open = False
+                elif inventory_open:
                     inventory_open = False
                 else:
-                    return Scene.MENU
+                    pause_open = True
+                    pause_menu.reset()
+            elif pause_open:
+                action = pause_menu.handle_event(event, screen.get_size())
+                if action == PauseAction.CONTINUE:
+                    pause_open = False
+                elif action == PauseAction.QUIT:
+                    return Scene.QUIT
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
                 inventory_open = not inventory_open
             elif inventory_open:
@@ -152,7 +163,7 @@ def main_game(screen):
         """
         Keyboard Input Block
         """
-        if not inventory_open:
+        if not inventory_open and not pause_open:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_w]:
                 player.move(0, -PLAYER_SPEED)
@@ -169,9 +180,8 @@ def main_game(screen):
                 player.facing = (1, 0)
                 facing_right = True
             if keys[pygame.K_SPACE]:
-                player.attack(enemies, pygame.time.get_ticks())
+                player.attack(enemies, now)
 
-            now = pygame.time.get_ticks()
             for e in enemies:
                 e.update(player, now)
             enemies = [e for e in enemies if e.is_alive()]
@@ -193,10 +203,12 @@ def main_game(screen):
 
         for e in enemies:
             draw_health_bar(screen, e)
-        draw_slash(screen, slash_image, player, pygame.time.get_ticks())
+        draw_slash(screen, slash_image, player, now)
 
         if inventory_open:
             inventory_ui.draw(screen)
+        if pause_open:
+            pause_menu.draw(screen)
 
 
         if DEBUG_OVERLAY:
