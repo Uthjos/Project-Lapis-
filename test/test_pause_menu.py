@@ -14,7 +14,9 @@ def click(pos, button=1):
 
 
 def hover(pos):
-    return pygame.event.Event(pygame.MOUSEMOTION, pos=pos, rel=(0, 0), buttons=(0, 0, 0))
+    return pygame.event.Event(
+        pygame.MOUSEMOTION, pos=pos, rel=(0, 0), buttons=(0, 0, 0)
+    )
 
 
 def make_menu(screen):
@@ -25,7 +27,10 @@ def test_has_continue_and_quit_buttons(screen):
     menu = make_menu(screen)
 
     assert [label for label, _ in menu.BUTTONS] == ["Continue", "Quit"]
-    assert [action for _, action in menu.BUTTONS] == [PauseAction.CONTINUE, PauseAction.QUIT]
+    assert [action for _, action in menu.BUTTONS] == [
+        PauseAction.CONTINUE,
+        PauseAction.QUIT,
+    ]
 
 
 def test_starts_on_continue(screen):
@@ -37,9 +42,9 @@ def test_down_and_up_move_selection_and_wrap(screen):
 
     menu.handle_event(key(pygame.K_DOWN), SCREEN_SIZE)
     assert menu.selected_index == 1
-    menu.handle_event(key(pygame.K_DOWN), SCREEN_SIZE)   # wraps to top
+    menu.handle_event(key(pygame.K_DOWN), SCREEN_SIZE)  # wraps to top
     assert menu.selected_index == 0
-    menu.handle_event(key(pygame.K_UP), SCREEN_SIZE)     # wraps to bottom
+    menu.handle_event(key(pygame.K_UP), SCREEN_SIZE)  # wraps to bottom
     assert menu.selected_index == 1
 
 
@@ -74,7 +79,10 @@ def test_click_activates_the_clicked_button(screen):
 
     assert menu.handle_event(click(quit_rect.center), SCREEN_SIZE) == PauseAction.QUIT
     assert menu.selected_index == 1
-    assert menu.handle_event(click(continue_rect.center), SCREEN_SIZE) == PauseAction.CONTINUE
+    assert (
+        menu.handle_event(click(continue_rect.center), SCREEN_SIZE)
+        == PauseAction.CONTINUE
+    )
     assert menu.selected_index == 0
 
 
@@ -134,7 +142,7 @@ def test_draw_dims_the_screen_and_draws_panel(screen):
 
     menu.draw(screen)
 
-    assert tuple(screen.get_at((0, 0)))[:3] < (200, 200, 200)       # dimmed overlay
+    assert tuple(screen.get_at((0, 0)))[:3] < (200, 200, 200)  # dimmed overlay
     panel = menu._panel_rect(SCREEN_SIZE)
     assert tuple(screen.get_at((panel.x + 10, panel.y + 10)))[:3] != (200, 200, 200)
 

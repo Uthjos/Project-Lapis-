@@ -1,6 +1,5 @@
-
-from src.object_class.PotionFactory import PotionFactory
-from src.object_class.WeaponFactory import WeaponFactory
+from src.object_class.potion_factory import PotionFactory
+from src.object_class.weapon_factory import WeaponFactory
 
 
 def give_starting_items(player):

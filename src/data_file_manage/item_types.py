@@ -1,15 +1,9 @@
-
 # Item categories and the properties each one uses
 ITEM_TYPES = {
     "weapon": {
         "file": "weapons.json",
-        "fields": {
-            "damage": int,
-            "attack_speed": float,
-            "range": int
-        }
+        "fields": {"damage": int, "attack_speed": float, "range": int},
     },
-
     "potion": {
         "file": "potions.json",
         "fields": {
@@ -18,8 +12,8 @@ ITEM_TYPES = {
             "stamina": int,
             "strength": int,
             "defense": int,
-            "speed": int
+            "speed": int,
         },
-        "item_type": "consumable"
-    }
+        "item_type": "consumable",
+    },
 }

@@ -5,9 +5,9 @@ import pygame
 from src.scenes import Scene
 from src.settings import SCREEN_HEIGHT, SCREEN_WIDTH
 
-pygame.init()
 FADE_IN_MS = 2000
-#eventually make this a global enum so that every scene knows how many other scenes there are.
+# eventually make this a global enum so that every scene knows how many other scenes there are.
+
 
 def main_menu(screen):
     # Initialize game variables as the player, enemies and such.
@@ -25,7 +25,6 @@ def main_menu(screen):
     fade_start = pygame.time.get_ticks() + 1000
     # Game loop.
     while True:
-
         # Time management.
         clock.tick(fps_cap)
         now = pygame.time.get_ticks()
@@ -41,7 +40,7 @@ def main_menu(screen):
                     return Scene.GAME
                 fade_start = now - FADE_IN_MS
 
-        progress = min((now - fade_start) / FADE_IN_MS, 1.0) #title fading
+        progress = min((now - fade_start) / FADE_IN_MS, 1.0)  # title fading
 
         subtitle.set_alpha(int(progress * 255))
         screen.fill((40, 40, 40))

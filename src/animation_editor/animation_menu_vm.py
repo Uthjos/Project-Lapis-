@@ -1,12 +1,14 @@
 import pygame
 
-from src.animation.AnimationStack import *
+from src.animation.animation_stack import AnimationStack
 
 
 class AnimationMenuVM:
-    def __init__(self, ani_stack: AnimationStack, ):
+    def __init__(
+        self,
+        ani_stack: AnimationStack,
+    ):
         self.ani_stack = ani_stack
-
 
     @staticmethod
     def get_image(filename: str):

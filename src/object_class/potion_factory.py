@@ -1,17 +1,15 @@
-
 import json
 from pathlib import Path
 
-from src.object_class.Item import Item
+from src.object_class.item import Item
 
 
 class PotionFactory:
+    """Potion factory class."""
     def __init__(self):
         # Find the potion JSON file
         data_file = (
-            Path(__file__).resolve().parent.parent
-            / "data_file_manage"
-            / "potions.json"
+            Path(__file__).resolve().parent.parent / "data_file_manage" / "potions.json"
         )
 
         # Load the potion data
@@ -26,21 +24,10 @@ class PotionFactory:
         data = self.potions[potion_id]
 
         # Create the potion as an Item object
-        potion = Item(
-            data["name"],
-            "consumable",
-            data.get("description", "")
-        )
+        potion = Item(data["name"], "consumable", data.get("description", ""))
 
         # Add all of its stat adjustments
-        for stat in (
-            "health",
-            "mana",
-            "stamina",
-            "strength",
-            "defense",
-            "speed"
-        ):
+        for stat in ("health", "mana", "stamina", "strength", "defense", "speed"):
             setattr(potion, stat, data.get(stat, 0))
 
         return potion

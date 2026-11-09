@@ -1,12 +1,13 @@
 import math
 
-from src.animation.AnimationStack import Action, SpriteDirection
-from src.object_class.Entity import Entity
-from src.object_class.Inventory import Inventory
-from src.object_class.Weapon import Weapon
+from src.animation.animation_stack import Action, SpriteDirection
+from src.object_class.entity import Entity
+from src.object_class.inventory import Inventory
+from src.object_class.weapon import Weapon
 
 
 class Character(Entity):
+    """Character class"""
     def __init__(self, x=0, y=0, health=100):
         super().__init__(x, y, health)
         self.direction = SpriteDirection.S
@@ -44,7 +45,11 @@ class Character(Entity):
         hitbox = weapon.attack_rect(self.hurtbox.center, self.facing)
         hits = []
         for target in targets:
-            if target is not self and target.is_alive() and hitbox.colliderect(target.hurtbox):
+            if (
+                target is not self
+                and target.is_alive()
+                and hitbox.colliderect(target.hurtbox)
+            ):
                 target.take_damage(weapon.damage)
                 hits.append(target)
         return hits

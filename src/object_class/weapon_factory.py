@@ -1,14 +1,14 @@
-
 import json
 from pathlib import Path
 
-from src.object_class.Weapon import Weapon
+from src.object_class.weapon import Weapon
 
 
 class WeaponFactory:
     def __init__(self):
         # Find the JSON file containing weapon definitions
-        data_file = Path(__file__).resolve().parent.parent / "data_file_manage" / "weapons.json"        # Load the weapon data into a dictionary
+        data_file = (
+            Path(__file__).resolve().parent.parent / "data_file_manage" / "weapons.json")  # Load the weapon data into a dictionary
         with open(data_file, "r", encoding="utf-8") as file:
             self.weapons = json.load(file)
 
@@ -26,5 +26,5 @@ class WeaponFactory:
             data["damage"],
             data["attack_speed"],
             data["range"],
-            data.get("description", "")
+            data.get("description", ""),
         )

@@ -4,6 +4,8 @@ from enum import Enum, auto
 
 import pygame
 
+from src.ui import ui_helpers as ui
+
 
 class PauseAction(Enum):
     CONTINUE = auto()
@@ -11,6 +13,8 @@ class PauseAction(Enum):
 
 
 class PauseMenu:
+    """Overlay with Continue and Quit buttons, drawn over the paused game."""
+
     PANEL_WIDTH = 320
     PANEL_HEIGHT = 240
     BUTTON_WIDTH = 220
@@ -53,35 +57,56 @@ class PauseMenu:
         return None
 
     def draw(self, surface):
-        width, height = surface.get_size()
-        overlay = pygame.Surface((width, height), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 150))
-        surface.blit(overlay, (0, 0))
+        """Draw the dimmed backdrop, panel, title, buttons and key hints."""
+        size = surface.get_size()
+        ui.dim_screen(surface)
 
-        panel = self._panel_rect((width, height))
-        pygame.draw.rect(surface, (28, 25, 32), panel, border_radius=8)
-        pygame.draw.rect(surface, (191, 157, 91), panel, width=3, border_radius=8)
-        self._label(surface, "Paused", self.title_font, (240, 221, 177),
-                    (panel.centerx, panel.y + 36), centered=True)
+        panel = self._panel_rect(size)
+        pygame.draw.rect(surface, (28, 25, 32), panel, border_radius=8)  # background
+        pygame.draw.rect(surface, (156, 21, 4), panel, width=3, border_radius=8)  # outline
+        ui.draw_label(
+            surface,
+            "Paused",
+            self.title_font,
+            (240, 221, 177),
+            (panel.centerx, panel.y + 36),
+            centered=True,
+        )
 
-        for index, ((text, _), rect) in enumerate(zip(self.BUTTONS, self.button_rects((width, height)))):
+        for index, ((text, _), rect) in enumerate(zip(self.BUTTONS, self.button_rects(size))):
             selected = index == self.selected_index
-            pygame.draw.rect(surface, (113, 78, 34) if selected else (47, 43, 48), rect, border_radius=5)
-            pygame.draw.rect(surface, (232, 190, 104) if selected else (91, 85, 92), rect,
-                             width=2, border_radius=5)
-            self._label(surface, text, self.font, (255, 245, 221), rect.center, centered=True)
+            pygame.draw.rect(
+                surface, (113, 78, 34) if selected else (47, 43, 48), rect, border_radius=5
+            )
+            pygame.draw.rect(
+                surface,
+                (156, 21, 4) if selected else (91, 85, 92),
+                rect,
+                width=2,
+                border_radius=5,
+            )
+            ui.draw_label(surface, text, self.font, (255, 245, 221), rect.center, centered=True)
 
-        self._label(surface, "Up/Down: select   |   Enter: confirm   |   Esc: continue",
-                    self.small_font, (185, 179, 169), (panel.centerx, panel.bottom + 18), centered=True)
+        ui.draw_label(
+            surface,
+            "Up/Down: select   |   Enter: confirm   |   Esc: continue",
+            self.small_font,
+            (185, 179, 169),
+            (panel.centerx, panel.bottom + 18),
+            centered=True,
+        )
 
     def button_rects(self, screen_size):
         """One Rect per entry in BUTTONS, stacked and centred inside the panel."""
         panel = self._panel_rect(screen_size)
         top = panel.y + 80
         return [
-            pygame.Rect(panel.centerx - self.BUTTON_WIDTH // 2,
-                        top + i * (self.BUTTON_HEIGHT + self.BUTTON_GAP),
-                        self.BUTTON_WIDTH, self.BUTTON_HEIGHT)
+            pygame.Rect(
+                panel.centerx - self.BUTTON_WIDTH // 2,
+                top + i * (self.BUTTON_HEIGHT + self.BUTTON_GAP),
+                self.BUTTON_WIDTH,
+                self.BUTTON_HEIGHT,
+            )
             for i in range(len(self.BUTTONS))
         ]
 
@@ -92,16 +117,4 @@ class PauseMenu:
         return None
 
     def _panel_rect(self, screen_size):
-        width, height = screen_size
-        return pygame.Rect(
-            (width - self.PANEL_WIDTH) // 2,
-            (height - self.PANEL_HEIGHT) // 2,
-            self.PANEL_WIDTH,
-            self.PANEL_HEIGHT,
-        )
-
-    @staticmethod
-    def _label(surface, text, font, color, position, centered=False):
-        image = font.render(text, True, color)
-        rect = image.get_rect(center=position) if centered else image.get_rect(topleft=position)
-        surface.blit(image, rect)
+        return ui.panel_rect(screen_size, self.PANEL_WIDTH, self.PANEL_HEIGHT)

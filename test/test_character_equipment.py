@@ -1,10 +1,10 @@
 import math
 
-from src.animation.AnimationStack import Action, SpriteDirection
-from src.object_class.Character import Character
-from src.object_class.Entity import Entity
-from src.object_class.Item import Item
-from src.object_class.Weapon import Weapon
+from src.animation.animation_stack import Action, SpriteDirection
+from src.object_class.character import Character
+from src.object_class.entity import Entity
+from src.object_class.item import Item
+from src.object_class.weapon import Weapon
 
 
 class WallMap:
@@ -15,7 +15,7 @@ class WallMap:
 
 
 def make_sword():
-    return Weapon("Sword", damage=10, attack_speed=1.0, range=40)
+    return Weapon("Sword", damage=10, attack_speed=1.0, attack_range=40)
 
 
 def make_armed_character():
@@ -67,8 +67,8 @@ def test_move_blocked_by_collision_map_slides_on_other_axis():
 
     player.move(-5, 7)
 
-    assert player.x == 0   # blocked
-    assert player.y == 7   # free axis still moves
+    assert player.x == 0  # blocked
+    assert player.y == 7  # free axis still moves
 
 
 def test_attack_without_weapon_does_nothing():

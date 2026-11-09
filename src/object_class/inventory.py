@@ -2,6 +2,7 @@
 
 
 class Inventory:
+    """Inventory class."""
     def __init__(self, capacity=20):
         if capacity < 1:
             raise ValueError("Inventory capacity must be at least 1")

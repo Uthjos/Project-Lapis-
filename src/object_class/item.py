@@ -2,6 +2,7 @@
 
 
 class Item:
+    """Item class."""
     def __init__(self, name, item_type="item", description=""):
         if not name:
             raise ValueError("Item name cannot be empty")

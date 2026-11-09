@@ -3,9 +3,9 @@ from enum import Enum
 
 import pygame
 
-from src.data_file_manage.DirectoryPath import DirectoryPath as dp
-from src.data_file_manage.ExporterFactory import ExporterFactory
-from src.data_file_manage.ParserFactory import ParserFactory
+from src.data_file_manage.directory_path import DirectoryPath as dp
+from src.data_file_manage.exporter_factory import ExporterFactory
+from src.data_file_manage.parser_factory import ParserFactory
 
 
 class AnimationPart(Enum):
@@ -50,10 +50,14 @@ class SpriteDirection(Enum):
     W = "W"
     NW = "NW"
 
-"""PygameProp contains the pygame transformation data that is associated with
-each sprite associated with the individual parts"""
+
+
+
 @dataclass
 class PygameProp:
+    """PygameProp contains the pygame transformation data that is associated with
+    each sprite associated with the individual parts
+    """
     x: float = 0
     y: float = 0
     scale: tuple = (1.0, 1.0)
@@ -75,19 +79,22 @@ class PygameProp:
 
     @classmethod
     def from_dict(cls, d: dict):
-        return cls(x=d.get("x", 0),
-                   y=d.get("y", 0),
-                   scale=tuple(d.get("scale", (1, 1))),
-                   rotation=d.get("rotation", 0),
-                   h_flip=d.get("h_flip", False),
-                   v_flip=d.get("v_flip", False),
-                   center=tuple(d.get("center", (0, 0))),
-                   )
+        return cls(
+            x=d.get("x", 0),
+            y=d.get("y", 0),
+            scale=tuple(d.get("scale", (1, 1))),
+            rotation=d.get("rotation", 0),
+            h_flip=d.get("h_flip", False),
+            v_flip=d.get("v_flip", False),
+            center=tuple(d.get("center", (0, 0))),
+        )
 
 
-"""the Individual sprites that are the different parts on the character"""
+
+
 @dataclass
 class SpriteData(PygameProp):
+    """the Individual sprites that are the different parts on the character"""
     part: AnimationPart = AnimationPart.HEAD
     file_location: str = ""
     props: PygameProp = field(default_factory=PygameProp)
@@ -100,20 +107,23 @@ class SpriteData(PygameProp):
         return {
             "part": self.part.value,
             "file_location": self.file_location,
-            "properties": self.props.to_dict()
+            "properties": self.props.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, d: dict):
-        return cls(part=AnimationPart(d["part"]),
-                   file_location=d["file_location"],
-                   props=PygameProp.from_dict(d.get("properties", {})),
-                   )
+        return cls(
+            part=AnimationPart(d["part"]),
+            file_location=d["file_location"],
+            props=PygameProp.from_dict(d.get("properties", {})),
+        )
 
 
-"""The whole picture where everything comes together for a single frame"""
+
+
 @dataclass
 class Frame(PygameProp):
+    """The whole picture where everything comes together for a single frame"""
     # layer order is based on where the sprite is on the sprite list
     sprites: list[SpriteData] = field(default_factory=list)
     time_to_next_frame: int = 100
@@ -126,42 +136,32 @@ class Frame(PygameProp):
 
     @classmethod
     def from_dict(cls, d: dict):
-        return cls(sprites=[SpriteData.from_dict(s) for s in d.get("sprites", [])],
-                   time_to_next_frame=d.get("time_to_next_frame", 100))
+        return cls(
+            sprites=[SpriteData.from_dict(s) for s in d.get("sprites", [])],
+            time_to_next_frame=d.get("time_to_next_frame", 100),
+        )
 
 
 
 
-"""contains every possible action that a NPC or Character should be able to do"""
 @dataclass
 class AnimationStack:
-
-
+    """contains every possible action that a NPC or Character should be able to do"""
     # Every direction contains a dict of actions and actions contains list of frames
     animations: dict = field(
         default_factory=lambda: {
-            direction: {
-                action: [] for action in Action
-            }
+            direction: {action: [] for action in Action}
             for direction in SpriteDirection
         }
     )
 
-
-    def add_frame(
-            self,
-            frame: Frame,
-            action: Action,
-            direction: SpriteDirection
-    ):
+    def add_frame(self, frame: Frame, action: Action, direction: SpriteDirection):
         self.animations[direction][action].append(frame)
 
     def to_dict(self):
         return {
             direction.value: {
-                action.value: [
-                    frame.to_dict() for frame in frames
-                ]
+                action.value: [frame.to_dict() for frame in frames]
                 for action, frames in actions.items()
             }
             for direction, actions in self.animations.items()
@@ -182,4 +182,4 @@ class AnimationStack:
 
     def export_to_json(self, name: str):
         path = dp.get_dir(dp.ANIMATION) / f"{name}.json"
-        ExporterFactory.get_exporter("json").export(data=self.to_dict(), file_name=path)
+        ExporterFactory.get_exporter("json").export(data=self.to_dict(), filename=path)

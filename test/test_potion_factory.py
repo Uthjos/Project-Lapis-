@@ -1,7 +1,6 @@
-
 import pytest
 
-from src.object_class.PotionFactory import PotionFactory
+from src.object_class.potion_factory import PotionFactory
 
 
 def test_health_potion():

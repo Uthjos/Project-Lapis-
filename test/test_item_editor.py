@@ -1,7 +1,6 @@
-
 import pytest
 
-from src.data_file_manage.ItemEditor import ItemEditor
+from src.data_file_manage.item_editor import ItemEditor
 
 
 def test_add_potion(tmp_path):
@@ -16,7 +15,7 @@ def test_add_potion(tmp_path):
         "stamina": 0,
         "strength": 0,
         "defense": 0,
-        "speed": -2
+        "speed": -2,
     }
 
     editor.add_item("potion", "test_potion", potion)
@@ -39,15 +38,12 @@ def test_edit_potion(tmp_path):
         "stamina": 0,
         "strength": 0,
         "defense": 0,
-        "speed": 0
+        "speed": 0,
     }
 
     editor.add_item("potion", "test_potion", potion)
 
-    editor.edit_item("test_potion", {
-        "health": 50,
-        "speed": -3
-    })
+    editor.edit_item("test_potion", {"health": 50, "speed": -3})
 
     items = editor.load_items("potion")
 
@@ -64,7 +60,7 @@ def test_add_weapon(tmp_path):
         "description": "A test weapon.",
         "damage": 10,
         "attack_speed": 1.0,
-        "range": 2
+        "range": 2,
     }
 
     editor.add_item("weapon", "test_sword", weapon)
@@ -82,7 +78,7 @@ def test_invalid_weapon_damage(tmp_path):
         "description": "",
         "damage": -10,
         "attack_speed": 1.0,
-        "range": 2
+        "range": 2,
     }
 
     with pytest.raises(ValueError):
@@ -101,7 +97,7 @@ def test_duplicate_item_id(tmp_path):
         "stamina": 0,
         "strength": 0,
         "defense": 0,
-        "speed": 0
+        "speed": 0,
     }
 
     editor.add_item("potion", "test_potion", potion)

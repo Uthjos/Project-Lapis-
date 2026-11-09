@@ -10,11 +10,11 @@ from src.game_scene import (
     generate_enemies,
     main_game,
 )
-from src.iso_math.TileSet import Tile
-from src.object_class.Character import Character
-from src.object_class.Entity import Entity
-from src.object_class.Slime import Slime
-from src.object_class.Weapon import Weapon
+from src.iso_math.tile_set import Tile
+from src.object_class.character import Character
+from src.object_class.entity import Entity
+from src.object_class.slime import Slime
+from src.object_class.weapon import Weapon
 from src.scenes import Scene
 
 
@@ -47,7 +47,7 @@ def test_slime_spawn_tiles_are_inside_map_and_walkable():
 
 def test_tileset_walkability():
     assert TILESET.is_walkable(Tile.GRASS_CLEAN)
-    assert not TILESET.is_walkable(Tile.Water)
+    assert not TILESET.is_walkable(Tile.WATER)
     assert not TILESET.is_walkable(Tile.LARGE_ROCK)
 
 
@@ -68,7 +68,7 @@ def test_generate_enemies_spawns_one_slime_per_spawn_tile(slime_assets):
 def test_draw_health_bar_shows_remaining_health():
     surface = pygame.Surface((200, 200))
     entity = Entity(50, 50, health=30)
-    entity.take_damage(15)   # half health
+    entity.take_damage(15)  # half health
 
     draw_health_bar(surface, entity)
 
@@ -79,7 +79,7 @@ def test_draw_health_bar_shows_remaining_health():
 
 def make_attacking_player(last_attack_time):
     player = Character(100, 100)
-    sword = Weapon("Sword", damage=10, attack_speed=1.0, range=40)
+    sword = Weapon("Sword", damage=10, attack_speed=1.0, attack_range=40)
     player.inventory.add_item(sword)
     player.equip_item(sword)
     player.last_attack_time = last_attack_time
@@ -134,8 +134,9 @@ def test_main_game_returns_quit_on_window_close(screen):
 def feed_events(monkeypatch, frames):
     """pygame.event.get() returns one list of events per frame, then QUIT forever."""
     frames = iter(frames)
-    monkeypatch.setattr(pygame.event, "get",
-                        lambda: next(frames, [pygame.event.Event(pygame.QUIT)]))
+    monkeypatch.setattr(
+        pygame.event, "get", lambda: next(frames, [pygame.event.Event(pygame.QUIT)])
+    )
 
 
 def key(k):
@@ -151,8 +152,10 @@ def test_escape_opens_pause_menu_instead_of_leaving(screen, monkeypatch):
 
 def test_pause_menu_quit_button_quits(screen, monkeypatch):
     # Esc opens the pause menu, Down selects Quit, Enter confirms.
-    feed_events(monkeypatch, [[key(pygame.K_ESCAPE)], [key(pygame.K_DOWN)],
-                              [key(pygame.K_RETURN)]])
+    feed_events(
+        monkeypatch,
+        [[key(pygame.K_ESCAPE)], [key(pygame.K_DOWN)], [key(pygame.K_RETURN)]],
+    )
     result = main_game(screen)
 
     assert result == Scene.QUIT
@@ -164,7 +167,11 @@ def test_pause_menu_continue_resumes_game(screen, monkeypatch):
 
     def fake_get():
         calls["n"] += 1
-        return frames[calls["n"] - 1] if calls["n"] <= len(frames) else [pygame.event.Event(pygame.QUIT)]
+        return (
+            frames[calls["n"] - 1]
+            if calls["n"] <= len(frames)
+            else [pygame.event.Event(pygame.QUIT)]
+        )
 
     monkeypatch.setattr(pygame.event, "get", fake_get)
 
@@ -179,7 +186,11 @@ def test_escape_closes_pause_menu(screen, monkeypatch):
 
     def fake_get():
         calls["n"] += 1
-        return frames[calls["n"] - 1] if calls["n"] <= len(frames) else [pygame.event.Event(pygame.QUIT)]
+        return (
+            frames[calls["n"] - 1]
+            if calls["n"] <= len(frames)
+            else [pygame.event.Event(pygame.QUIT)]
+        )
 
     monkeypatch.setattr(pygame.event, "get", fake_get)
 
@@ -190,9 +201,16 @@ def test_escape_closes_pause_menu(screen, monkeypatch):
 def test_escape_closes_inventory_before_opening_pause(screen, monkeypatch):
     # I opens inventory, Esc closes it (no pause menu), second Esc opens pause,
     # then Down+Enter picks Quit.
-    feed_events(monkeypatch, [[key(pygame.K_i)], [key(pygame.K_ESCAPE)],
-                              [key(pygame.K_ESCAPE)], [key(pygame.K_DOWN)],
-                              [key(pygame.K_RETURN)]])
+    feed_events(
+        monkeypatch,
+        [
+            [key(pygame.K_i)],
+            [key(pygame.K_ESCAPE)],
+            [key(pygame.K_ESCAPE)],
+            [key(pygame.K_DOWN)],
+            [key(pygame.K_RETURN)],
+        ],
+    )
 
     assert main_game(screen) == Scene.QUIT
 
@@ -204,7 +222,11 @@ def test_inventory_key_ignored_while_paused(screen, monkeypatch):
 
     def fake_get():
         calls["n"] += 1
-        return frames[calls["n"] - 1] if calls["n"] <= len(frames) else [pygame.event.Event(pygame.QUIT)]
+        return (
+            frames[calls["n"] - 1]
+            if calls["n"] <= len(frames)
+            else [pygame.event.Event(pygame.QUIT)]
+        )
 
     monkeypatch.setattr(pygame.event, "get", fake_get)
 

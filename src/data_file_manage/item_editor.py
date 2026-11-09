@@ -1,8 +1,7 @@
-
 import json
 from pathlib import Path
 
-from src.data_file_manage.ItemTypes import ITEM_TYPES
+from src.data_file_manage.item_types import ITEM_TYPES
 
 
 class ItemEditor:
@@ -139,7 +138,7 @@ def main():
 
                 data = {
                     "name": input("Name: ").strip(),
-                    "description": input("Description: ").strip()
+                    "description": input("Description: ").strip(),
                 }
 
                 # Ask for the stats defined for this category

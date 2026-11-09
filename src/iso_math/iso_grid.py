@@ -1,6 +1,6 @@
 import pygame
 
-from src.iso_math.TileSet import Tile
+from src.iso_math.tile_set import Tile
 
 
 class IsoGrid:
@@ -23,8 +23,10 @@ class IsoGrid:
 
     # ---------- geometry (unchanged) ----------
     def tile_topleft(self, row, col):
-        return (self.origin_x + (col - row) * self.step_x,
-                self.origin_y + (col + row) * self.step_y)
+        return (
+            self.origin_x + (col - row) * self.step_x,
+            self.origin_y + (col + row) * self.step_y,
+        )
 
     def tile_center(self, row, col):
         x, y = self.tile_topleft(row, col)
@@ -32,8 +34,12 @@ class IsoGrid:
 
     def tile_diamond(self, row, col):
         cx, cy = self.tile_center(row, col)
-        return [(cx, cy - self.step_y), (cx + self.step_x, cy),
-                (cx, cy + self.step_y), (cx - self.step_x, cy)]
+        return [
+            (cx, cy - self.step_y),
+            (cx + self.step_x, cy),
+            (cx, cy + self.step_y),
+            (cx - self.step_x, cy),
+        ]
 
     # ---------- lookup ----------
     def tile_at(self, px, py):

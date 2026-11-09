@@ -6,8 +6,10 @@ import pygame
 def load_strip(path, frame_w, frame_h):
     """Slice a horizontal sprite strip into frames. Needs the display (convert_alpha)."""
     sheet = pygame.image.load(str(path)).convert_alpha()
-    return [sheet.subsurface((i * frame_w, 0, frame_w, frame_h)).copy()
-            for i in range(sheet.get_width() // frame_w)]
+    return [
+        sheet.subsurface((i * frame_w, 0, frame_w, frame_h)).copy()
+        for i in range(sheet.get_width() // frame_w)
+    ]
 
 
 class Animation:
@@ -55,7 +57,7 @@ class AnimationPlayer:
             elif anim.loop:
                 self.index = 0
             else:
-                self.finished = True   # holds on the last frame
+                self.finished = True  # holds on the last frame
                 self.timer = 0
                 break
 
