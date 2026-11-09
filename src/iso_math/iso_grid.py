@@ -30,7 +30,7 @@ class IsoGrid:
 
     def tile_center(self, row, col):
         x, y = self.tile_topleft(row, col)
-        return (x + self.tile_w / 2, y + self.top_h / 2)
+        return x + self.tile_w / 2, y + self.top_h / 2
 
     def tile_diamond(self, row, col):
         cx, cy = self.tile_center(row, col)

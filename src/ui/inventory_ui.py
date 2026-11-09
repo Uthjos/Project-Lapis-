@@ -24,30 +24,48 @@ class InventoryUI:
 
     # ---------- input
     def handle_event(self, event, screen_size):
-        """Handle selection and equip clicks. Return True when an item was equipped."""
-        if event.type == pygame.KEYDOWN and event.key in (pygame.K_UP, pygame.K_DOWN):
-            items = self.inventory.get_items()
-            if items:
-                current = self.selected_index or 0
-                step = -1 if event.key == pygame.K_UP else 1
-                self.selected_index = (current + step) % len(items)
-                self._keep_selection_visible()
-            return False
-
-        if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_e):
-            return self.equip_selected()
-
+        """Handle selection and equip input. Return True when an item was equipped."""
+        if event.type == pygame.KEYDOWN:
+            return self._handle_key(event)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            panel = self._panel_rect(screen_size)
-            items = self.inventory.get_items()
-            for visible_index, index in self._visible_rows(items):
-                if self._row_rect(panel, visible_index).collidepoint(event.pos):
-                    self.selected_index = index
-                    return False
-            self.equip_button = self._equip_button_rect(panel)
-            if self.equip_button.collidepoint(event.pos):
-                return self.equip_selected()
+            return self._handle_click(event.pos, screen_size)
         return False
+
+    def _handle_key(self, event):
+        if event.key in (pygame.K_UP, pygame.K_DOWN):
+            self._move_selection(-1 if event.key == pygame.K_UP else 1)
+            return False
+        if event.key in (pygame.K_RETURN, pygame.K_e):
+            return self.equip_selected()
+        return False
+
+    def _handle_click(self, pos, screen_size):
+        panel = self._panel_rect(screen_size)
+        clicked_index = self._row_at(panel, pos)
+        if clicked_index is not None:
+            self.selected_index = clicked_index
+            return False
+        self.equip_button = self._equip_button_rect(panel)
+        if self.equip_button.collidepoint(pos):
+            return self.equip_selected()
+        return False
+
+    def _move_selection(self, step):
+        """Move the highlight up or down one row, wrapping at the ends."""
+        items = self.inventory.get_items()
+        if not items:
+            return
+        current = self.selected_index or 0
+        self.selected_index = (current + step) % len(items)
+        self._keep_selection_visible()
+
+    def _row_at(self, panel, pos):
+        """Return the item index of the visible row under pos, or None."""
+        items = self.inventory.get_items()
+        for visible_index, index in self._visible_rows(items):
+            if self._row_rect(panel, visible_index).collidepoint(pos):
+                return index
+        return None
 
     def equip_selected(self):
         """Equip the highlighted item. Return True when it was equipped."""
