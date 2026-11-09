@@ -8,6 +8,7 @@ from src.object_class.character import Character
 from src.object_class.slime import Slime
 from src.object_class.starting_items import give_starting_items
 from src.pause_menu import PauseAction, PauseMenu
+from src.scene_base import BaseScene
 from src.scenes import Scene
 from src.ui.inventory_ui import InventoryUI
 
@@ -111,174 +112,158 @@ def load_environment_tile(filename):
     return pygame.image.load(str(TILE_DIR / filename)).convert_alpha()
 
 
-class GameState:
-    """Mutable per-run state that the helper functions below read and update."""
+def _is_key(event, key):
+    return event.type == pygame.KEYDOWN and event.key == key
 
-    def __init__(self, player, enemies):
-        self.player = player
-        self.enemies = enemies
+
+class GameScene(BaseScene):
+    """The playable world: movement, combat, inventory and pause menu."""
+
+    FPS = FPS
+
+    def __init__(self, screen):
+        super().__init__(screen)
+        screen_size = screen.get_size()
+
+        # Load assets.
+        TILESET.load(load_environment_tile, TILE_SCALE)
+        Slime.load_assets(SLIME_DIR)
+        self.grid = IsoGrid(TILE_MAP, TILESET, *screen_size)
+        self.background = self.grid.render(BACKGROUND_COLOR)
+        self.player_image = load_sprite("Sprite style 2.png")
+        self.slash_image = pygame.image.load(
+            str(ACTIONS_DIR / "test_slash_reference.png")
+        ).convert_alpha()
+
+        # Player data.
+        self.player = Character(screen_size[0] / 2, screen_size[1] / 2)  # center
+        self.player.set_collision_map(self.grid)
+        give_starting_items(self.player)
+
+        self.enemies = generate_enemies(self.grid)
+        self.inventory_ui = InventoryUI(self.player.inventory, self.player)
+        self.pause_menu = PauseMenu()
         self.inventory_open = False
         self.pause_open = False
         self.facing_right = True
+
+        # Time spent in a menu, so enemy and weapon timers freeze while open.
+        self.paused_ms = 0
+        self.now = 0
 
     @property
     def frozen(self):
         """True while an overlay menu is open and the world should not advance."""
         return self.inventory_open or self.pause_open
 
+    # ---------- BaseScene hooks
+    def begin_frame(self, dt):
+        if self.frozen:
+            self.paused_ms += dt
+        self.now = pygame.time.get_ticks() - self.paused_ms
 
-# ---------- event handling
-def _is_key(event, key):
-    return event.type == pygame.KEYDOWN and event.key == key
-
-
-def _handle_escape(state, pause_menu):
-    """Esc backs out one layer: pause menu -> inventory -> open the pause menu."""
-    if state.pause_open:
-        state.pause_open = False
-    elif state.inventory_open:
-        state.inventory_open = False
-    else:
-        state.pause_open = True
-        pause_menu.reset()
-
-
-def _handle_pause_event(event, state, pause_menu, screen_size):
-    """Route an event to the pause menu. Return Scene.QUIT if Quit was chosen."""
-    action = pause_menu.handle_event(event, screen_size)
-    if action == PauseAction.CONTINUE:
-        state.pause_open = False
-    elif action == PauseAction.QUIT:
-        return Scene.QUIT
-    return None
-
-
-def handle_events(state, inventory_ui, pause_menu, screen_size):
-    """Process this frame's events. Return Scene.QUIT to leave the game, else None."""
-    for event in pygame.event.get():
+    def handle_event(self, event):
         if event.type == pygame.QUIT:
             return Scene.QUIT
         if _is_key(event, pygame.K_ESCAPE):
-            _handle_escape(state, pause_menu)
-        elif state.pause_open:
-            if _handle_pause_event(event, state, pause_menu, screen_size) == Scene.QUIT:
-                return Scene.QUIT
+            self._handle_escape()
+        elif self.pause_open:
+            return self._handle_pause_event(event)
         elif _is_key(event, pygame.K_i):
-            state.inventory_open = not state.inventory_open
-        elif state.inventory_open:
-            inventory_ui.handle_event(event, screen_size)
-    return None
+            self.inventory_open = not self.inventory_open
+        elif self.inventory_open:
+            self.inventory_ui.handle_event(event, self.screen.get_size())
+        return None
 
+    def update(self, dt):
+        if not self.frozen:
+            self._handle_movement()
+            self._update_world()
 
-# ---------- per-frame updates
-def handle_movement(state):
-    """Move and turn the player from the WASD keys."""
-    player = state.player
-    keys = pygame.key.get_pressed()
-    for key, (dx, dy) in MOVE_KEYS:
-        if keys[key]:
-            player.move(dx * PLAYER_SPEED, dy * PLAYER_SPEED)
-            player.facing = (dx, dy)
-            if dx:
-                state.facing_right = dx > 0
+    def draw(self):
+        screen = self.screen
+        screen.blit(self.background, (0, 0))
+        self._draw_characters()
+        for enemy in self.enemies:
+            if enemy.is_alive():
+                draw_health_bar(screen, enemy)
+        draw_slash(screen, self.slash_image, self.player, self.now)
 
+        if self.inventory_open:
+            self.inventory_ui.draw(screen)
+        if self.pause_open:
+            self.pause_menu.draw(screen)
+        if DEBUG_OVERLAY:
+            self._draw_debug_overlay()
 
-def update_world(state, now):
-    """Advance the player's attack and every enemy, then drop the dead ones."""
-    if pygame.key.get_pressed()[pygame.K_SPACE]:
-        state.player.attack(state.enemies, now)
-    for enemy in state.enemies:
-        enemy.update(state.player, now)
-    state.enemies = [e for e in state.enemies if e.is_alive()]
+    # ---------- event helpers
+    def _handle_escape(self):
+        """Esc backs out one layer: pause menu -> inventory -> open the pause menu."""
+        if self.pause_open:
+            self.pause_open = False
+        elif self.inventory_open:
+            self.inventory_open = False
+        else:
+            self.pause_open = True
+            self.pause_menu.reset()
 
+    def _handle_pause_event(self, event):
+        """Route an event to the pause menu. Return Scene.QUIT if Quit was chosen."""
+        action = self.pause_menu.handle_event(event, self.screen.get_size())
+        if action == PauseAction.CONTINUE:
+            self.pause_open = False
+        elif action == PauseAction.QUIT:
+            return Scene.QUIT
+        return None
 
-# ---------- drawing
-def draw_characters(screen, state, player_image):
-    """Draw the player and enemies, sorted by feet position so lower is in front."""
-    player = state.player
-    sprite = (
-        player_image
-        if state.facing_right
-        else pygame.transform.flip(player_image, True, False)
-    )
-    # Each entry is (feet_y, draw_function, *arguments).
-    drawables = [
-        (player.movement_hitbox.bottom, screen.blit, sprite, (player.x, player.y))
-    ]
-    drawables += [(e.movement_hitbox.bottom, e.draw, screen) for e in state.enemies]
-    for _, draw, *args in sorted(drawables, key=lambda d: d[0]):
-        draw(*args)
-    pygame.draw.rect(screen, (255, 0, 0), player.movement_hitbox, width=2)
+    # ---------- update helpers
+    def _handle_movement(self):
+        """Move and turn the player from the WASD keys."""
+        keys = pygame.key.get_pressed()
+        for key, (dx, dy) in MOVE_KEYS:
+            if keys[key]:
+                self.player.move(dx * PLAYER_SPEED, dy * PLAYER_SPEED)
+                self.player.facing = (dx, dy)
+                if dx:
+                    self.facing_right = dx > 0
 
+    def _update_world(self):
+        """Advance the player's attack and every enemy, then drop finished corpses."""
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
+            self.player.attack(self.enemies, self.now)
+        for enemy in self.enemies:
+            enemy.update(self.player, self.now)
+        self.enemies = [e for e in self.enemies if not e.removable]
 
-def draw_debug_overlay(screen, enemies, grid):
-    for enemy in enemies:
-        pygame.draw.rect(screen, (255, 255, 0), enemy.hurtbox, width=1)
-    for r in range(grid.rows):
-        for c in range(len(grid.tile_map[r])):
-            color = (
-                (0, 255, 0) if TILESET.is_walkable(grid.tile_map[r][c]) else (255, 0, 0)
-            )
-            pygame.draw.polygon(screen, color, grid.tile_diamond(r, c), 1)
+    # ---------- draw helpers
+    def _draw_characters(self):
+        """Draw the player and enemies, sorted by feet position so lower is in front."""
+        screen, player = self.screen, self.player
+        sprite = (
+            self.player_image
+            if self.facing_right
+            else pygame.transform.flip(self.player_image, True, False)
+        )
+        # Each entry is (feet_y, draw_function, *arguments).
+        drawables = [
+            (player.movement_hitbox.bottom, screen.blit, sprite, (player.x, player.y))
+        ]
+        drawables += [(e.movement_hitbox.bottom, e.draw, screen) for e in self.enemies]
+        for _, draw, *args in sorted(drawables, key=lambda d: d[0]):
+            draw(*args)
+        pygame.draw.rect(screen, (255, 0, 0), player.movement_hitbox, width=2)
 
-
-def draw_frame(screen, state, assets, now):
-    """Draw the world, then whichever overlay menu is open."""
-    screen.blit(assets["background"], (0, 0))
-    draw_characters(screen, state, assets["player_image"])
-    for enemy in state.enemies:
-        draw_health_bar(screen, enemy)
-    draw_slash(screen, assets["slash_image"], state.player, now)
-
-    if state.inventory_open:
-        assets["inventory_ui"].draw(screen)
-    if state.pause_open:
-        assets["pause_menu"].draw(screen)
-    if DEBUG_OVERLAY:
-        draw_debug_overlay(screen, state.enemies, assets["grid"])
-    pygame.display.flip()
+    def _draw_debug_overlay(self):
+        for enemy in self.enemies:
+            pygame.draw.rect(self.screen, (255, 255, 0), enemy.hurtbox, width=1)
+        grid = self.grid
+        for r in range(grid.rows):
+            for c in range(len(grid.tile_map[r])):
+                walkable = TILESET.is_walkable(grid.tile_map[r][c])
+                color = (0, 255, 0) if walkable else (255, 0, 0)
+                pygame.draw.polygon(self.screen, color, grid.tile_diamond(r, c), 1)
 
 
 def main_game(screen):
-    screen_size = screen.get_size()
-    clock = pygame.time.Clock()
-    paused_ms = 0  # time spent in the inventory or pause menu, so enemy and weapon timers freeze while open
-
-    # Load assets.
-    TILESET.load(load_environment_tile, TILE_SCALE)
-    Slime.load_assets(SLIME_DIR)
-    grid = IsoGrid(TILE_MAP, TILESET, *screen_size)
-
-    # Player data.
-    player = Character(screen_size[0] / 2, screen_size[1] / 2)  # spawn in center
-    player.set_collision_map(grid)
-    give_starting_items(player)
-
-    state = GameState(player, generate_enemies(grid))
-    pause_menu = PauseMenu()
-    inventory_ui = InventoryUI(player.inventory, player)
-    assets = {
-        "grid": grid,
-        "background": grid.render(BACKGROUND_COLOR),
-        "player_image": load_sprite("Sprite style 2.png"),
-        "slash_image": pygame.image.load(
-            str(ACTIONS_DIR / "test_slash_reference.png")
-        ).convert_alpha(),
-        "inventory_ui": inventory_ui,
-        "pause_menu": pause_menu,
-    }
-
-    while True:
-        dt = clock.tick(FPS)
-        if state.frozen:
-            paused_ms += dt
-        now = pygame.time.get_ticks() - paused_ms
-
-        if handle_events(state, inventory_ui, pause_menu, screen_size) == Scene.QUIT:
-            return Scene.QUIT
-
-        if not state.frozen:
-            handle_movement(state)
-            update_world(state, now)
-
-        draw_frame(screen, state, assets, now)
+    """Scene entry point used by main.py."""
+    return GameScene(screen).run()
