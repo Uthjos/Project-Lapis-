@@ -1,4 +1,6 @@
 import os
+import random
+import threading
 
 # Must be set before pygame starts, so no real pygame window ever opens.
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -30,7 +32,7 @@ def surface_to_photo(surf: pygame.Surface, zoom: int = ZOOM) -> ImageTk.PhotoIma
         )  # NEAREST keeps pixels crisp
     return ImageTk.PhotoImage(img)
 
-
+"""Need to test this eventually"""
 def export_gif(frames: list[pygame.Surface], duration_ms: list[int], path) -> None:
     """Write frames to an animated GIF. Durations come from each frame's time_to_next_frame."""
     imgs = [
@@ -48,8 +50,6 @@ def export_gif(frames: list[pygame.Surface], duration_ms: list[int], path) -> No
 
 
 """Renders pygame sprites by converting it to PIL immage then to tkinter image"""
-
-
 class SpriteView(pygame.sprite.Sprite):
     def __init__(self, image_path, position, scale=None):
         super().__init__()
@@ -68,35 +68,39 @@ class AnimationMenuView(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+
         self.title("Animation Editor")
         self.geometry("800x700")
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
+        # configure the grid layout (3x4) of main frame
+        for col in range(3): self.grid_columnconfigure(col, weight=1)
+        for row in range(4): self.grid_rowconfigure(row, weight=1)
+
         pygame.init()
         pygame.display.set_mode((1, 1))
+
         self.surface = pygame.Surface((WIDTH, HEIGHT))
         self.sprite_group = pygame.sprite.Group()
 
         self.dirty = True  # set True whenever the picture needs redraw
         self._photo = None
         self._after_id = None
+
+        # Create Action menu
         self.create_menu()
 
-        # Canvas insteadof label: it give mouse coordinates and allows overlays later
+        # Create editor sections
+        self.create_animation_frame()
+        self.create_frame_select_tab()
+        self.create_pygame_prop_frame()
 
-        self.display = tk.Canvas(
-            self,
-            width=WIDTH * ZOOM,
-            height=HEIGHT * ZOOM,
-            highlightthickness=0,
-            bg="white",
+        self._after_id = self.after(
+            FRAME_MS,
+            self.update_pygame_frame
         )
-        self.display.pack()
-        self._image_id = self.display.create_image(0, 0, anchor="nw")
 
-        self._after_id = self.after(FRAME_MS, self.update_pygame_frame)
-
-    # ---- menu ----
+    """Action Menu"""
     def create_menu(self):
         action_menu = tk.Menu(self)
 
@@ -116,6 +120,8 @@ class AnimationMenuView(ctk.CTk):
             self.sprite_group.add(SpriteView(path, (WIDTH // 2, HEIGHT // 2)))
             self.mark_dirty()
 
+
+
     """Animation Frame"""
     def create_animation_frame(self):
         animation_frame = ctk.CTkFrame(self, corner_radius=0)
@@ -124,9 +130,18 @@ class AnimationMenuView(ctk.CTk):
         # configure frame grid
         animation_frame.grid_columnconfigure(0, weight=1)
 
-        # placeholder
-        ani_frame_title = ctk.CTkLabel(animation_frame, text="Ani Skin")
-        ani_frame_title.grid(row=0, column=0, sticky="nsew")
+        # Pygame display canvas
+        self.display = tk.Canvas(
+            animation_frame,
+            width=WIDTH * ZOOM,
+            height=HEIGHT * ZOOM,
+            highlightthickness=0,
+            bg="white",
+        )
+
+        self.display.grid(row=0, column=0, sticky="nsew")
+
+        self._image_id = self.display.create_image(0, 0, anchor="nw", image=self._photo)
 
     # ---- rendering ----
     def mark_dirty(self):
@@ -153,8 +168,9 @@ class AnimationMenuView(ctk.CTk):
             self.dirty = False
         self._after_id = self.after(FRAME_MS, self.update_pygame_frame)
 
-    """Frame Select Frame"""
 
+
+    """Frame Select Frame"""
     # create tabview
     def create_frame_select_tab(self):
         tabview = ctk.CTkTabview(self, width=250)
@@ -207,8 +223,9 @@ class AnimationMenuView(ctk.CTk):
         for i in range(50):
             item_list_frame = ctk.CTkFrame(self, width=250)
 
-    """frame pygame prop frame"""
 
+
+    """frame pygame prop frame"""
     def create_pygame_prop_frame(self):
         prop_frame = ctk.CTkScrollableFrame(self, width=250)
         prop_frame.grid(row=2, rowspan=2, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
@@ -227,7 +244,7 @@ class AnimationMenuView(ctk.CTk):
             label = ctk.CTkLabel(prop_container_frame, text=f"CTkSlider {prop}", width=250)
             label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-            entry = ctk.CTkEntry(prop_container_frame, width=250)
+            entry = ctk.CTkEntry(prop_container_frame)
             entry.grid(row=1, column=0, sticky="w")
 
             # create switch or slider for property
@@ -275,6 +292,10 @@ class AnimationMenuView(ctk.CTk):
         except ValueError:
             # revert entry text to current slider value if input isn't a number
             self.update_entry_from_slider(slider.get(), entry)
+
+    """Thread handling"""
+    def handle_background_task(self, *args):
+        thread = threading.Thread(target=self.update_slider_from_entry)
 
     def on_close(self):
         if self._after_id:
