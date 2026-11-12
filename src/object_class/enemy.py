@@ -7,6 +7,7 @@ from src.object_class.entity import Entity
 
 
 class EnemyState(Enum):
+    """Enemy action states enum"""
     IDLE = auto()
     CHASE = auto()
     WINDUP = auto()
@@ -54,6 +55,7 @@ class Enemy(Entity):
         )
 
     def take_damage(self, damage):
+        """apply damage to enemy object method"""
         if self.state == EnemyState.DEAD:
             return
         super().take_damage(damage)

@@ -4,15 +4,20 @@ import pytest
 from src import game_scene
 from src.game_scene import (
     PLAYER_SPEED,
-    SLIME_SPAWN_TILES,
-    TILE_MAP,
+    SLIME_COUNT,
+    SLIME_MIN_DISTANCE,
+    STAGE_COLS,
+    STAGE_ROWS,
     TILESET,
     GameScene,
     draw_health_bar,
     draw_slash,
     generate_enemies,
+    generate_stage,
     main_game,
+    tile_position,
 )
+from src.iso_math.iso_grid import IsoGrid
 from src.iso_math.tile_set import Tile
 from src.object_class.character import Character
 from src.object_class.enemy import Enemy
@@ -31,23 +36,46 @@ class FakeGrid:
         return True
 
 
+SEED = 1234  # fixed stage so GameScene tests are repeatable
+
+
 # ---------- map data ----------
-def test_tile_map_uses_only_known_tiles():
-    for row in TILE_MAP:
+@pytest.mark.parametrize("seed", range(10))
+def test_generated_stage_uses_only_known_tiles(seed):
+    stage = generate_stage(seed)
+
+    assert len(stage.tiles) == STAGE_ROWS
+    assert all(len(row) == STAGE_COLS for row in stage.tiles)
+    for row in stage.tiles:
         for tile_id in row:
             assert tile_id in TILESET.types
 
 
-def test_tile_map_is_not_empty():
-    assert len(TILE_MAP) > 0
-    assert all(len(row) > 0 for row in TILE_MAP)
+def test_generate_stage_is_repeatable_by_seed():
+    assert generate_stage(7).tiles == generate_stage(7).tiles
+    assert generate_stage(7).tiles != generate_stage(8).tiles
 
 
-def test_slime_spawn_tiles_are_inside_map_and_walkable():
-    for row, col in SLIME_SPAWN_TILES:
-        assert 0 <= row < len(TILE_MAP)
-        assert 0 <= col < len(TILE_MAP[row])
-        assert TILESET.is_walkable(TILE_MAP[row][col])
+def test_unseeded_stage_reports_a_seed_that_rebuilds_it():
+    stage = generate_stage()
+
+    assert generate_stage(stage.seed).tiles == stage.tiles
+
+
+def test_stage_fits_on_screen(screen):
+    TILESET.load(game_scene.load_environment_tile, game_scene.TILE_SCALE)
+    grid = IsoGrid(generate_stage(SEED).tiles, TILESET, *screen.get_size())
+
+    corners = [
+        grid.tile_topleft(0, 0),
+        grid.tile_topleft(0, STAGE_COLS - 1),
+        grid.tile_topleft(STAGE_ROWS - 1, 0),
+        grid.tile_topleft(STAGE_ROWS - 1, STAGE_COLS - 1),
+    ]
+    w, h = screen.get_size()
+    for x, y in corners:
+        assert 0 <= x and x + grid.tile_w <= w
+        assert 0 <= y and y + grid.tile_h <= h
 
 
 def test_tileset_walkability():
@@ -57,13 +85,21 @@ def test_tileset_walkability():
 
 
 # ---------- helpers ----------
+def test_tile_position_centres_feet_on_tile():
+    grid = FakeGrid()
+    player = Character(*tile_position(grid, 2, 3))
+
+    assert player.movement_hitbox.center == grid.tile_center(2, 3)
+
+
 def test_generate_enemies_spawns_one_slime_per_spawn_tile(slime_assets):
     grid = FakeGrid()
+    spawn_tiles = [(2, 6), (7, 5), (3, 5)]
 
-    enemies = generate_enemies(grid)
+    enemies = generate_enemies(grid, spawn_tiles)
 
-    assert len(enemies) == len(SLIME_SPAWN_TILES)
-    for enemy, (row, col) in zip(enemies, SLIME_SPAWN_TILES):
+    assert len(enemies) == len(spawn_tiles)
+    for enemy, (row, col) in zip(enemies, spawn_tiles):
         cx, cy = grid.tile_center(row, col)
         assert isinstance(enemy, Slime)
         assert (enemy.x, enemy.y) == (cx - 16, cy - 24)
@@ -255,7 +291,7 @@ def press(monkeypatch, *keys):
 
 @pytest.fixture
 def scene(screen):
-    game = GameScene(screen)
+    game = GameScene(screen, seed=SEED)
     game.player.set_collision_map(None)  # tests move the player freely
     return game
 
@@ -265,8 +301,44 @@ def test_game_scene_is_a_base_scene(scene):
     assert scene.FPS == game_scene.FPS
 
 
+def test_game_scene_uses_generated_stage(scene):
+    assert scene.grid.tile_map is scene.stage.tiles
+    assert scene.stage.seed == SEED
+
+
+def test_each_game_gets_its_own_random_stage(screen):
+    assert GameScene(screen).stage.seed != GameScene(screen).stage.seed
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_player_spawns_standing_on_walkable_ground(screen, seed):
+    game = GameScene(screen, seed=seed)
+    row, col = game.stage.spawn
+
+    assert game.stage.is_walkable(row, col)
+    assert game.grid.tile_at(*game.player.movement_hitbox.center) == game.stage.tiles[row][col]
+    assert game.player._can_stand(0, 0)  # feet box fully on walkable tiles
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_slimes_spawn_on_walkable_ground_away_from_player(screen, seed):
+    game = GameScene(screen, seed=seed)
+    spawn_center = game.grid.tile_center(*game.stage.spawn)
+
+    assert len(game.enemies) == SLIME_COUNT
+    for slime in game.enemies:
+        assert slime._can_stand(0, 0)
+        assert slime.movement_hitbox.center != spawn_center
+    # Distance check in tile units, using the generator's own spawn list.
+    for row, col in game.stage.pick_spawn_tiles(
+        SLIME_COUNT, rng=game.stage.seed, min_distance=SLIME_MIN_DISTANCE
+    ):
+        sr, sc = game.stage.spawn
+        assert abs(row - sr) + abs(col - sc) >= SLIME_MIN_DISTANCE
+
+
 def test_game_scene_starts_with_slimes_and_armed_player(scene):
-    assert len(scene.enemies) == len(SLIME_SPAWN_TILES)
+    assert len(scene.enemies) == SLIME_COUNT
     assert all(isinstance(e, Slime) for e in scene.enemies)
     assert isinstance(scene.player.equipped_item, Weapon)
     assert scene.frozen is False

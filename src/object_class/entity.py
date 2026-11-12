@@ -14,9 +14,11 @@ class Entity:
         self._sync_hitboxes()
 
     def set_collision_map(self, collision_map):
+        """apply new collision map."""
         self.collision_map = collision_map
 
     def _sync_hitboxes(self):
+        """Sync hitbox and movement hitbox to current player position."""
         self.hurtbox.topleft = (self.x, self.y)
         self.movement_hitbox.midbottom = (self.x + 16, self.y + 32)
 
@@ -34,7 +36,9 @@ class Entity:
         return all(self.collision_map.is_walkable(px, py) for px, py in corners)
 
     def take_damage(self, damage):
+        """apply damage to character"""
         self.health = max(self.health - damage, 0)
 
     def is_alive(self):
+        """return True if entity health is greater than 0"""
         return self.health > 0
