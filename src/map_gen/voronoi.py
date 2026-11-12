@@ -1,9 +1,7 @@
 """Grid Voronoi math: site placement, Lloyd relaxation and cell assignment.
 
-Pure Python on purpose. Stage maps are small (tens of tiles a side), so a
-brute-force nearest-site search is plenty fast and keeps the project free of
-numpy/scipy. If maps grow to hundreds of tiles a side, swap ``assign_cells``
-for scipy.spatial.cKDTree.query(points, k=2) — the rest is unchanged.
+If maps grow to hundreds of tiles a side, swap ``assign_cells``
+for scipy.spatial.cKDTree.query(points, k=2)
 """
 
 from __future__ import annotations
@@ -69,34 +67,56 @@ def assign_cells(mask: Mask, sites: list[Point], warp: ValueNoise | None = None,
                  warp_strength: float = 0.0) -> CellMap:
     """Nearest-site lookup for every inside tile, plus how deep inside its cell it is.
 
+    Goes through every tile inside the stage shape.
+    For each tile it records which Voronoi cell the tile belongs to and how deep inside that cell it is.
+
     ``warp`` displaces the lookup point by smooth noise so cell borders wobble
     organically instead of being straight lines.
     """
     rows, cols = len(mask), len(mask[0]) if mask else 0
     owner = [[-1] * cols for _ in range(rows)]
     depth = [[0.0] * cols for _ in range(rows)]
-    for r in range(rows):
-        for c in range(cols):
-            if not mask[r][c]:
-                continue
-            p = (r + 0.5, c + 0.5)
-            if warp is not None and warp_strength:
-                p = (p[0] + warp.sample(r, c, 0) * warp_strength,
-                     p[1] + warp.sample(r, c, 1) * warp_strength)
-            d1 = d2 = math.inf
-            best = 0
-            for i, s in enumerate(sites):
-                d = _dist2(p, s)
-                if d < d1:
-                    d1, d2, best = d, d1, i
-                elif d < d2:
-                    d2 = d
-            owner[r][c] = best
-            if d2 == math.inf:  # only one site: depth falls off with distance instead
-                depth[r][c] = max(0.0, 1.0 - math.sqrt(d1) / max(rows, cols))
-            else:
-                depth[r][c] = 1.0 - math.sqrt(d1) / math.sqrt(d2)
+    for r, c in inside_cells(mask):
+        point = _lookup_point(r, c, warp, warp_strength)
+        best, d1, d2 = _two_nearest(point, sites)
+        owner[r][c] = best
+        depth[r][c] = _cell_depth(d1, d2, max(rows, cols))
     return CellMap(owner, depth)
+
+def _lookup_point(row: int, col: int, warp: ValueNoise | None, strength: float) -> Point:
+    """Center of tile (row, col), nudged by the warp noise when one is given."""
+    point = (row + 0.5, col + 0.5)
+    if warp is None or not strength:
+        return point
+    return (point[0] + warp.sample(row, col, 0) * strength,
+            point[1] + warp.sample(row, col, 1) * strength)
+
+
+def _two_nearest(point: Point, sites: list[Point]) -> tuple[int, float, float]:
+    """Index of the closest site, plus squared distances to the closest and second closest.
+
+    With a single site the second distance is infinity. Ties go to the lower index.
+    """
+    nearest_index, d1, d2 = 0, math.inf, math.inf
+    for i, site in enumerate(sites):
+        d = _dist2(point, site)
+        if d < d1:
+            nearest_index, d1, d2 = i, d, d1
+        elif d < d2:
+            d2 = d
+    return nearest_index, d1, d2
+
+
+def _cell_depth(d1: float, d2: float, map_span: int) -> float:
+    """How deep inside its cell a point is: 1.0 at the site, 0.0 on a cell border.
+
+    ``d1``/``d2`` are squared distances to the nearest and second-nearest site. A point
+    on a border is equally far from both, so the ratio of the real distances is 1 there.
+    With only one site there is no border, so depth fades with distance across the map.
+    """
+    if d2 == math.inf:
+        return max(0.0, 1.0 - math.sqrt(d1) / map_span)
+    return 1.0 - math.sqrt(d1 / d2)
 
 
 class ValueNoise:
