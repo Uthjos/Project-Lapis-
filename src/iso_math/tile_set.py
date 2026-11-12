@@ -22,6 +22,7 @@ class Tile(IntEnum):
 
 @dataclass(frozen=True)
 class TileType:
+    """Named IDs for a tile type."""
     name: str
     texture_file: str | None = None  # None = nothing is drawn
     walkable: bool = False
@@ -32,6 +33,7 @@ class TileType:
 
 
 class TileSet:
+    """Class representing a tile set."""
     def __init__(self, types: dict[int, TileType]):
         self.types = types
         self.textures: dict[int, pygame.Surface] = {}
@@ -49,12 +51,15 @@ class TileSet:
         self.tile_size = self.textures[base_id].get_size()
 
     def is_walkable(self, tile_id) -> bool:
+        """Check if a tile is walkable."""
         t = self.types.get(tile_id)
         return t.walkable if t else False  # unknown IDs are solid
 
     def texture(self, tile_id):
+        """Get the texture for a tile_id."""
         return self.textures.get(tile_id)  # None for void
 
     def is_sight_blocking(self, tile_id) -> bool:
+        """Check if a tile is sight blocking."""
         t = self.types.get(tile_id)
         return t.sight_blocking if t else False

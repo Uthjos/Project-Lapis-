@@ -29,6 +29,7 @@ NEIGHBOURS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 @dataclass
 class StageMap:
+    """Stage Map class. contains attributes about the stage, including spawn points, seed, sites, tiles"""
     tiles: list[list[int]]  # same format as TILE_MAP: plain ints, VOID outside the shape
     spawn: tuple[int, int]  # (row, col) the player should start on
     seed: int  # pass back into generate() to rebuild the exact same stage
@@ -39,17 +40,21 @@ class StageMap:
 
     @property
     def rows(self) -> int:
+        """The rows of the stage map."""
         return len(self.tiles)
 
     @property
     def cols(self) -> int:
+        """The columns of the stage map."""
         return max((len(r) for r in self.tiles), default=0)
 
     def is_walkable(self, row: int, col: int) -> bool:
+        """returns if a tile is walkable."""
         return (0 <= row < self.rows and 0 <= col < len(self.tiles[row])
                 and self.tiles[row][col] in self.walkable_ids)
 
     def walkable_cells(self) -> list[tuple[int, int]]:
+        """returns list of tiles that are walkable."""
         return [(r, c) for r, line in enumerate(self.tiles)
                 for c, t in enumerate(line) if t in self.walkable_ids]
 
@@ -197,7 +202,8 @@ class VoronoiMapGenerator:
 
     # ---------- setup helpers ----------
     def _resolve(self, region: Region) -> Region:
-        """Drop tile names this enum/tileset can't place; empty layers fall back to the bridge tile."""
+        """Drop tile names this enum/tileset can't place;
+        empty layers fall back to the bridge tile."""
         bridge = next(n for n, i in self.placeable.items() if i == self.bridge_id)
         layers = []
         for layer in region.layers:
