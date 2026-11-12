@@ -1,4 +1,4 @@
-from src.object_class.Character import Character
+from src.object_class.character import Character
 
 
 # checks that the character starts with the correct values

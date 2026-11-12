@@ -1,12 +1,12 @@
 import pytest
 
-from src.object_class.Item import Item
-from src.object_class.Weapon import Weapon
-from src.object_class.WeaponFactory import WeaponFactory
+from src.object_class.item import Item
+from src.object_class.weapon import Weapon
+from src.object_class.weapon_factory import WeaponFactory
 
 
 def make_weapon(**overrides):
-    stats = {"name": "Test Sword", "damage": 10, "attack_speed": 2.0, "range": 40}
+    stats = {"name": "Test Sword", "damage": 10, "attack_speed": 2.0, "attack_range": 40}
     stats.update(overrides)
     return Weapon(**stats)
 
@@ -22,11 +22,13 @@ def test_weapon_stats_and_cooldown():
     weapon = make_weapon(attack_speed=2.0)
 
     assert weapon.damage == 10
-    assert weapon.range == 40
+    assert weapon.attack_range == 40
     assert weapon.cooldown_ms == 500
 
 
-@pytest.mark.parametrize("field,value", [("damage", -1), ("attack_speed", 0), ("range", -5)])
+@pytest.mark.parametrize(
+    "field,value", [("damage", -1), ("attack_speed", 0), ("attack_range", -5)]
+)
 def test_invalid_stats_raise(field, value):
     with pytest.raises(ValueError):
         make_weapon(**{field: value})
@@ -43,7 +45,7 @@ def test_weapon_ready_and_use_respect_cooldown():
 
 
 def test_attack_rect_is_placed_in_front_of_attacker():
-    weapon = make_weapon(range=40)
+    weapon = make_weapon(attack_range=40)
 
     rect = weapon.attack_rect((16, 16), (1, 0))
     assert rect.size == (40, 40)

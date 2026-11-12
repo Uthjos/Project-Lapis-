@@ -1,6 +1,6 @@
 import pytest
 
-from src.object_class.Item import Item
+from src.object_class.item import Item
 
 
 def test_item_stores_values():

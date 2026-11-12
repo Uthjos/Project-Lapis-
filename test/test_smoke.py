@@ -12,13 +12,13 @@ def test_pygame_imports():
 
 def test_pygame_init_and_display():
     pygame.init()
-    screen = pygame.display.set_mode((100,100))
-    assert screen.get_size() == (100,100)
+    screen = pygame.display.set_mode((100, 100))
+    assert screen.get_size() == (100, 100)
     pygame.quit()
 
 
 def test_surface_and_rect():
-    surface = pygame.Surface((100,100))
+    surface = pygame.Surface((100, 100))
     rect = surface.get_rect()
     assert rect.width == 100
     assert rect.height == 100

@@ -1,6 +1,5 @@
-
-from src.object_class.Weapon import Weapon
-from src.object_class.WeaponFactory import WeaponFactory
+from src.object_class.weapon import Weapon
+from src.object_class.weapon_factory import WeaponFactory
 
 
 def test_weapon_creation():
@@ -13,7 +12,7 @@ def test_weapon_creation():
     assert sword.name == "Rusty Sword"
     assert sword.damage == 10
     assert sword.attack_speed == 1.0
-    assert sword.range >=32 #bigger than body of player
+    assert sword.attack_range >= 32  # bigger than body of player
 
 
 def test_invalid_weapon():

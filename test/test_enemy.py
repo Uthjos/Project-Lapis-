@@ -1,5 +1,5 @@
-from src.object_class.Character import Character
-from src.object_class.Enemy import Enemy, EnemyState
+from src.object_class.character import Character
+from src.object_class.enemy import Enemy, EnemyState
 
 
 def make_enemy(**kwargs):
@@ -36,8 +36,8 @@ def test_chasing_enemy_moves_toward_player():
     enemy = make_enemy(speed=1.5)
     player = Character(200, 0)
 
-    enemy.update(player, 0)   # IDLE -> CHASE
-    enemy.update(player, 1)   # step toward player
+    enemy.update(player, 0)  # IDLE -> CHASE
+    enemy.update(player, 1)  # step toward player
 
     assert enemy.x > 0
     assert enemy.y == 0
@@ -56,8 +56,8 @@ def test_chasing_enemy_leashes_back_to_idle():
 def test_enemy_in_range_starts_windup():
     enemy = make_enemy()
     player = Character(30, 0)
-    enemy.update(player, 0)   # -> CHASE
-    enemy.update(player, 1)   # -> WINDUP
+    enemy.update(player, 0)  # -> CHASE
+    enemy.update(player, 1)  # -> WINDUP
 
     assert enemy.state == EnemyState.WINDUP
 
@@ -66,7 +66,7 @@ def test_windup_hits_player_then_cooldown_then_chase():
     enemy = make_enemy(damage=10, windup_ms=400, cooldown_ms=1000)
     player = Character(30, 0)
     enemy.update(player, 0)
-    enemy.update(player, 1)    # WINDUP starts at t=1
+    enemy.update(player, 1)  # WINDUP starts at t=1
 
     enemy.update(player, 200)  # still winding up
     assert player.health == 100
@@ -85,7 +85,7 @@ def test_player_can_dodge_windup():
     enemy.update(player, 0)
     enemy.update(player, 1)
 
-    player.x = 500   # move out of range before impact
+    player.x = 500  # move out of range before impact
     player._sync_hitboxes()
     enemy.update(player, 401)
 

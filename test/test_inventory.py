@@ -1,7 +1,7 @@
 import pytest
 
-from src.object_class.Inventory import Inventory
-from src.object_class.Item import Item
+from src.object_class.inventory import Inventory
+from src.object_class.item import Item
 
 
 def test_inventory_starts_empty():

@@ -1,4 +1,4 @@
-from src.object_class.Entity import Entity
+from src.object_class.entity import Entity
 
 
 class FakeMap:

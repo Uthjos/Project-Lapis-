@@ -13,7 +13,9 @@ if str(PROJECT_ROOT) not in sys.path:
 import pygame
 import pytest
 
-SLIME_DIR = PROJECT_ROOT / "src" / "assets" / "sprites" / "Crypt Slime" / "Sprite Sheets"
+SLIME_DIR = (
+    PROJECT_ROOT / "src" / "assets" / "sprites" / "Crypt Slime" / "Sprite Sheets"
+)
 
 
 @pytest.fixture
@@ -28,7 +30,7 @@ def screen():
 @pytest.fixture
 def slime_assets(screen):
     """Slime sprite sheets loaded once into the class."""
-    from src.object_class.Slime import Slime
+    from src.object_class.slime import Slime
 
     Slime.load_assets(SLIME_DIR)
     return Slime
