@@ -116,6 +116,18 @@ class AnimationMenuView(ctk.CTk):
             self.sprite_group.add(SpriteView(path, (WIDTH // 2, HEIGHT // 2)))
             self.mark_dirty()
 
+    """Animation Frame"""
+    def create_animation_frame(self):
+        animation_frame = ctk.CTkFrame(self, corner_radius=0)
+        animation_frame.grid(row=0, column=0, columnspan=2, rowspan=3, sticky="nsew")
+
+        # configure frame grid
+        animation_frame.grid_columnconfigure(0, weight=1)
+
+        # placeholder
+        ani_frame_title = ctk.CTkLabel(animation_frame, text="Ani Skin")
+        ani_frame_title.grid(row=0, column=0, sticky="nsew")
+
     # ---- rendering ----
     def mark_dirty(self):
         self.dirty = True
@@ -140,6 +152,129 @@ class AnimationMenuView(ctk.CTk):
             self.display_frame()
             self.dirty = False
         self._after_id = self.after(FRAME_MS, self.update_pygame_frame)
+
+    """Frame Select Frame"""
+
+    # create tabview
+    def create_frame_select_tab(self):
+        tabview = ctk.CTkTabview(self, width=250)
+        tabview.grid(row=0, rowspan=2, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        tabview.add("Tab 1")
+        tabview.add("Tab 2")
+
+        tabview.tab("Tab 1").grid_columnconfigure(0, weight=1)
+        tabview.tab("Tab 1").grid_rowconfigure(0, weight=1)
+
+        tabview.tab("Tab 2").grid_columnconfigure(0, weight=1)
+
+        opt_1_scrollable_frame = ctk.CTkScrollableFrame(tabview.tab("Tab 1"), width=250)
+        opt_1_scrollable_frame.grid(row=0, column=0, pady=10, padx=10, sticky="nsew")
+        opt_1_scrollable_frame.grid_columnconfigure(0, weight=1)
+        for i in range(100):
+            frame_container_frame = ctk.CTkFrame(opt_1_scrollable_frame, width=250, fg_color="#505050")
+            frame_container_frame.grid(row=i, column=0, padx=5, pady=5, sticky="nsew")
+
+            # Up button
+            up_button = ctk.CTkButton(
+                frame_container_frame,
+                text="▲",
+                width=30,
+                height=25,
+                command=lambda: print("move up")
+            )
+            up_button.grid(row=0, column=0, padx=5, pady=2)
+
+            # Down button
+            down_button = ctk.CTkButton(
+                frame_container_frame,
+                text="▼",
+                width=30,
+                height=25,
+                command=lambda: print("move down")
+            )
+            down_button.grid(row=1, column=0, padx=5, pady=2)
+
+            frame_label = ctk.CTkLabel(frame_container_frame, text=f"Frame {i}")
+            frame_label.grid(row=0, column=1, padx=5, pady=2)
+
+            frame_label2 = ctk.CTkLabel(frame_container_frame, text=f"Original position Frame {i}")
+            frame_label2.grid(row=1, column=1, padx=5, pady=2)
+
+        opt_2_select_frame = ctk.CTkOptionMenu(tabview.tab("Tab 2"), dynamic_resizing=False,
+                                               values=["Option 1", "Option 2", "Option 3", "Option 4"])
+        opt_2_select_frame.grid(row=0, column=1, sticky="nsew")
+
+        for i in range(50):
+            item_list_frame = ctk.CTkFrame(self, width=250)
+
+    """frame pygame prop frame"""
+
+    def create_pygame_prop_frame(self):
+        prop_frame = ctk.CTkScrollableFrame(self, width=250)
+        prop_frame.grid(row=2, rowspan=2, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+
+        prop_frame.grid_columnconfigure(0, weight=1)
+
+        prop_frame_props = []
+
+        for prop in range(5):
+            prop_container_frame = ctk.CTkFrame(prop_frame, fg_color='#505050')
+            prop_container_frame.grid(row=prop, column=0, padx=5, pady=5, sticky="nsew")
+
+            ranint = random.randint(1, 100)
+
+            # Create lable for property maybe should be an entry box as well
+            label = ctk.CTkLabel(prop_container_frame, text=f"CTkSlider {prop}", width=250)
+            label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+            entry = ctk.CTkEntry(prop_container_frame, width=250)
+            entry.grid(row=1, column=0, sticky="w")
+
+            # create switch or slider for property
+            slider = ctk.CTkSlider(
+                prop_container_frame,
+                from_=0,
+                to=100,
+                command=lambda value, e=entry: self.update_entry_from_slider(value, e)
+            )
+            slider.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+            # remove the scroll functionality of sliders so you can scroll down without messing up values
+            slider._canvas.unbind("<MouseWheel>")
+            slider._canvas.unbind("<Button-4>")
+            slider._canvas.unbind("<Button-5>")
+            slider._mouse_wheel_all = lambda event: None
+
+            slider.set(ranint)
+            entry.insert(0, str(ranint))
+            entry.bind(
+                "<Return>",
+                lambda event, s=slider, e=entry: self.update_slider_from_entry(s, e)
+            )
+
+            prop_frame_props.append(slider)
+
+    def update_entry_from_slider(self, value, entry):
+        """Updates the entry text wherever the slider moves."""
+        formatted_val = f"{int(round(value))}"
+        entry.delete(0, "end")
+        entry.insert(0, formatted_val)
+
+    def update_slider_from_entry(self, slider, entry, event=None):
+        """Updates the slider wherever the entry."""
+        min_val = slider.cget("from_")
+        max_val = slider.cget("to")
+
+        try:
+            val = float(entry.get())
+            # Clamp value within the slider's min/max bounds
+            val = max(min_val, min(val, max_val))
+
+            slider.set(val)
+
+            self.update_entry_from_slider(value=val, entry=entry)
+        except ValueError:
+            # revert entry text to current slider value if input isn't a number
+            self.update_entry_from_slider(slider.get(), entry)
 
     def on_close(self):
         if self._after_id:
