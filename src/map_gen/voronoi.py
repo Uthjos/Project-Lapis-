@@ -16,6 +16,7 @@ Point = tuple[float, float]  # (row, col) in tile units, may be fractional
 
 
 def inside_cells(mask: Mask) -> list[tuple[int, int]]:
+    """Find all inside cells within a tile."""
     return [(r, c) for r, line in enumerate(mask) for c, inside in enumerate(line) if inside]
 
 
@@ -59,6 +60,10 @@ def relax(sites: list[Point], mask: Mask, iterations: int) -> list[Point]:
 
 @dataclass
 class CellMap:
+    """
+    Cell map class. holds list matrix of cell's site indices.
+    holds list of depth for each cell
+    """
     owner: list[list[int]]  # site index per tile, -1 outside the shape
     depth: list[list[float]]  # 1.0 at a site, 0.0 on a border between two cells
 
@@ -68,7 +73,8 @@ def assign_cells(mask: Mask, sites: list[Point], warp: ValueNoise | None = None,
     """Nearest-site lookup for every inside tile, plus how deep inside its cell it is.
 
     Goes through every tile inside the stage shape.
-    For each tile it records which Voronoi cell the tile belongs to and how deep inside that cell it is.
+    For each tile it records which Voronoi cell the tile belongs to and
+    how deep inside that cell it is.
 
     ``warp`` displaces the lookup point by smooth noise so cell borders wobble
     organically instead of being straight lines.

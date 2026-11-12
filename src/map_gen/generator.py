@@ -20,7 +20,15 @@ from enum import IntEnum
 
 from src.map_gen.regions import DEFAULT_REGIONS, Layer, Region
 from src.map_gen.shapes import Rectangle, StageShape
-from src.map_gen.voronoi import Point, ValueNoise, assign_cells, place_sites, relax
+from src.map_gen.voronoi import (
+    CellMap,
+    Point,
+    ValueNoise,
+    assign_cells,
+    inside_cells,
+    place_sites,
+    relax,
+)
 
 SIDES = ("top", "bottom", "left", "right")  # matrix sides: top = row 0, left = col 0
 OPPOSITE = {"top": "bottom", "bottom": "top", "left": "right", "right": "left"}
@@ -29,7 +37,10 @@ NEIGHBOURS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 @dataclass
 class StageMap:
-    """Stage Map class. contains attributes about the stage, including spawn points, seed, sites, tiles"""
+    """
+    Stage Map class. contains attributes about the stage, including spawn points, seed, sites, tiles
+
+    """
     tiles: list[list[int]]  # same format as TILE_MAP: plain ints, VOID outside the shape
     spawn: tuple[int, int]  # (row, col) the player should start on
     seed: int  # pass back into generate() to rebuild the exact same stage
@@ -136,17 +147,17 @@ class VoronoiMapGenerator:
 
     # ---------- public ----------
     def generate(
-        self,
-        rows: int,
-        cols: int,
-        *,
-        seed: int | None = None,
-        shape: StageShape | None = None,
-        region_weights: Mapping[str, float] | None = None,
-        previous: StageMap | None = None,
-        enter_from: str | None = None,
-        stitch_depth: int = 2,
-        spawn: tuple[int, int] | None = None,
+            self,
+            rows: int,
+            cols: int,
+            *,
+            seed: int | None = None,
+            shape: StageShape | None = None,
+            region_weights: Mapping[str, float] | None = None,
+            previous: StageMap | None = None,
+            enter_from: str | None = None,
+            stitch_depth: int = 2,
+            spawn: tuple[int, int] | None = None,
     ) -> StageMap:
         """Generate one stage.
 
@@ -159,46 +170,54 @@ class VoronoiMapGenerator:
         spawn           (row, col) for the player. Defaults to the middle of the entry
                         edge when stitching, otherwise the cell nearest the centre.
         """
-        if rows < 1 or cols < 1:
-            raise ValueError("rows and cols must be at least 1")
-        seed = random.randrange(2**31) if seed is None else seed
-        rng = random.Random(seed)
-        mask = (shape or Rectangle()).mask(rows, cols)
+        seed = random.randrange(2 ** 31) if seed is None else seed
+        rng = random.Random(seed)  # every random choice below comes from this, in order
 
-        # 1-2. Voronoi cells
-        inside = sum(map(sum, mask))
-        if not inside:
-            raise ValueError("Stage shape has no inside cells at this size")
-        n_sites = max(1, round(inside / (self.cell_size ** 2)))
-        sites = relax(place_sites(mask, n_sites, rng), mask, self.relax_iterations)
-        warp = ValueNoise(rng, self.warp_scale)
-        cells = assign_cells(mask, sites, warp, self.warp_strength)
+        mask = self._stage_mask(rows, cols, shape)
+        sites, cells = self._voronoi_cells(mask, rng)
+        site_regions = self._pick_regions(len(sites), region_weights, rng)
+        tiles = self._paint_tiles(mask, cells, site_regions, rng)
 
-        # 3. region per cell
-        names, weights = self._region_table(region_weights)
-        site_regions = rng.choices(names, weights, k=len(sites))
-
-        # 4. tiles
-        tiles = [[self.void_id] * cols for _ in range(rows)]
-        for r in range(rows):
-            for c in range(cols):
-                owner = cells.owner[r][c]
-                if owner >= 0:
-                    name = self.regions[site_regions[owner]].pick(cells.depth[r][c], rng)
-                    tiles[r][c] = self.placeable[name]
-
-        # 5. stitch to the previous stage
         if previous is not None or enter_from is not None:
-            if previous is None or enter_from not in SIDES:
-                raise ValueError(f"stitching needs previous and enter_from in {SIDES}")
             self._stitch(tiles, mask, previous, enter_from, stitch_depth)
 
-        # 6. spawn + connectivity
         spawn = self._choose_spawn(mask, spawn, enter_from)
         self._clear(tiles, mask, spawn)
         self._connect(tiles, mask, spawn)
 
         return StageMap(tiles, spawn, seed, sites, site_regions, self.walkable_ids, self.void_id)
+
+    # ---------- generation steps ----------
+    @staticmethod
+    def _stage_mask(rows, cols, shape):
+        """Which cells of a rows x cols matrix are part of the stage. Rejects empty stages."""
+        if rows < 1 or cols < 1:
+            raise ValueError("rows and cols must be at least 1")
+        mask = (shape or Rectangle()).mask(rows, cols)
+        if not any(any(line) for line in mask):
+            raise ValueError("Stage shape has no inside cells at this size")
+        return mask
+
+    def _voronoi_cells(self, mask, rng) -> tuple[list[Point], CellMap]:
+        """Place and relax the sites, then label every inside tile with its cell and depth."""
+        inside = sum(map(sum, mask))
+        n_sites = max(1, round(inside / (self.cell_size ** 2)))
+        sites = relax(place_sites(mask, n_sites, rng), mask, self.relax_iterations)
+        warp = ValueNoise(rng, self.warp_scale)
+        return sites, assign_cells(mask, sites, warp, self.warp_strength)
+
+    def _pick_regions(self, count, region_weights, rng) -> list[str]:
+        """A region name for each of ``count`` cells, drawn by weight."""
+        names, weights = self._region_table(region_weights)
+        return rng.choices(names, weights, k=count)
+
+    def _paint_tiles(self, mask, cells: CellMap, site_regions, rng) -> list[list[int]]:
+        """Fill each inside tile from its cell's region, using the tile's depth; VOID elsewhere."""
+        tiles = [[self.void_id] * len(mask[0]) for _ in mask]
+        for r, c in inside_cells(mask):
+            region = self.regions[site_regions[cells.owner[r][c]]]
+            tiles[r][c] = self.placeable[region.pick(cells.depth[r][c], rng)]
+        return tiles
 
     # ---------- setup helpers ----------
     def _resolve(self, region: Region) -> Region:
@@ -224,7 +243,10 @@ class VoronoiMapGenerator:
         return list(names), list(weights)
 
     # ---------- stitching ----------
-    def _stitch(self, tiles, mask, previous: StageMap, side: str, depth: int):
+    def _stitch(self, tiles, mask, previous: StageMap | None, side: str | None, depth: int):
+        """Copy ``previous``'s opposite edge onto this stage's ``side`` (up to ``depth`` lines)."""
+        if previous is None or side not in SIDES:
+            raise ValueError(f"stitching needs previous and enter_from in {SIDES}")
         rows, cols = len(tiles), len(tiles[0])
         source = previous.edge(OPPOSITE[side], depth)
         along = cols if side in ("top", "bottom") else rows
@@ -261,7 +283,7 @@ class VoronoiMapGenerator:
         )
 
     def _clear(self, tiles, mask, spawn):
-        """Make the spawn and its direct neighbours walkable."""
+        """Make the spawn and its direct neighbors walkable."""
         r0, c0 = spawn
         for dr, dc in ((0, 0), *NEIGHBOURS):
             r, c = r0 + dr, c0 + dc
@@ -276,58 +298,82 @@ class VoronoiMapGenerator:
         onto a blocker costs 1. When the search reaches a cut-off pocket, the blockers
         on that path become the bridge tile. Repeats until nothing is cut off.
         """
-        rows, cols = len(tiles), len(tiles[0])
         walk = self.walkable_ids
         while True:
             reached = _flood(tiles, mask, [spawn], walk)
-            pockets = [(r, c) for r in range(rows) for c in range(cols)
-                       if mask[r][c] and tiles[r][c] in walk and (r, c) not in reached]
+            pockets = self._cut_off_tiles(tiles, mask, reached)
             if not pockets:
                 return
-            pocket_set = set(pockets)
-            cost = {p: 0 for p in reached}
-            prev: dict[tuple[int, int], tuple[int, int] | None] = {p: None for p in reached}
-            dq = deque(reached)
-            hit = None
-            while dq:
-                p = dq.popleft()
-                if p in pocket_set:
-                    hit = p
-                    break
-                for dr, dc in NEIGHBOURS:
-                    q = (p[0] + dr, p[1] + dc)
-                    if not (0 <= q[0] < rows and 0 <= q[1] < cols and mask[q[0]][q[1]]):
-                        continue
-                    step = 0 if tiles[q[0]][q[1]] in walk else 1
-                    if cost[p] + step < cost.get(q, 1 << 30):
-                        cost[q] = cost[p] + step
-                        prev[q] = p
-                        (dq.appendleft if step == 0 else dq.append)(q)
-            if hit is None:  # pocket unreachable even through blockers (split shape): drop it
+            path = _cheapest_path(tiles, mask, reached, pockets, walk)
+            if path is None:  # pocket unreachable even through blockers (split shape): drop it
                 for r, c in pockets:
                     tiles[r][c] = self.void_id
                 return
-            p = hit
-            while p is not None:
-                if tiles[p[0]][p[1]] not in walk:
-                    tiles[p[0]][p[1]] = self.bridge_id
-                p = prev[p]
+            self._carve(tiles, path)
+
+    def _cut_off_tiles(self, tiles, mask, reached) -> list[tuple[int, int]]:
+        """Walkable inside tiles that the flood fill from the spawn did not reach."""
+        return [(r, c) for r, c in inside_cells(mask)
+                if tiles[r][c] in self.walkable_ids and (r, c) not in reached]
+
+    def _carve(self, tiles, path):
+        """Turn every blocking tile on ``path`` into the bridge tile."""
+        for r, c in path:
+            if tiles[r][c] not in self.walkable_ids:
+                tiles[r][c] = self.bridge_id
+
+
+def _inside_neighbours(mask, cell):
+    """The up-to-four orthogonal neighbors of ``cell`` that are inside the stage shape."""
+    r, c = cell
+    for dr, dc in NEIGHBOURS:
+        q = (r + dr, c + dc)
+        if 0 <= q[0] < len(mask) and 0 <= q[1] < len(mask[0]) and mask[q[0]][q[1]]:
+            yield q
 
 
 def _flood(tiles, mask, starts, walk):
-    rows, cols = len(tiles), len(tiles[0])
+    """Every walkable tile reachable from ``starts`` without crossing a blocker."""
     seen = set(starts)
     stack = list(starts)
     while stack:
-        r, c = stack.pop()
-        for dr, dc in NEIGHBOURS:
-            q = (r + dr, c + dc)
-            if (q not in seen and 0 <= q[0] < rows and 0 <= q[1] < cols
-                    and mask[q[0]][q[1]] and tiles[q[0]][q[1]] in walk):
+        for q in _inside_neighbours(mask, stack.pop()):
+            if q not in seen and tiles[q[0]][q[1]] in walk:
                 seen.add(q)
                 stack.append(q)
     return seen
 
+
+def _cheapest_path(tiles, mask, starts, targets, walk):
+    """Path from ``starts`` to the nearest of ``targets`` that crosses the fewest blockers.
+
+        0-1 BFS: stepping onto a walkable tile costs 0, onto a blocker costs 1, so zero-cost
+        steps go to the front of the queue and are explored first. Returns the path as a
+        list of cells from the target back to a start, or None if no target can be reached.
+        """
+    targets = set(targets)
+    cost = {p: 0 for p in starts}
+    came_from = {p: None for p in starts}
+    queue = deque(starts)
+    while queue:
+        p = queue.popleft()
+        if p in targets:
+            return _walk_back(came_from, p)
+        for q in _inside_neighbours(mask, p):
+            step = 0 if tiles[q[0]][q[1]] in walk else 1
+            if cost[p] + step < cost.get(q, 1 << 30):
+                cost[q] = cost[p] + step
+                came_from[q] = p
+                (queue.appendleft if step == 0 else queue.append)(q)
+    return None
+
+def _walk_back(came_from, end):
+    """Follow ``came_from`` links from ``end`` until a start (linked to None)."""
+    path = []
+    while end is not None:
+        path.append(end)
+        end = came_from[end]
+    return path
 
 def _manhattan(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])

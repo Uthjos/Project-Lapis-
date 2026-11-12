@@ -58,7 +58,7 @@ class Diamond(StageShape):
 class MaskShape(StageShape):
     """Hand-drawn outline. Accepts bools/ints or strings like "..##.." ('.' or ' ' = outside).
 
-    The mask is stretched (nearest neighbour) if the requested size differs,
+    The mask is stretched (nearest neighbor) if the requested size differs,
     so one hand-drawn outline can be reused at several stage sizes.
     """
 

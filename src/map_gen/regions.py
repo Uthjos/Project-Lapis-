@@ -27,6 +27,9 @@ class Layer:
 
 @dataclass(frozen=True)
 class Region:
+    """
+    Region definition: what a Voronoi cell is filled with.
+    """
     name: str
     layers: tuple[Layer, ...]
     weight: float = 1.0  # how often this region is picked for a cell
@@ -42,6 +45,12 @@ class Region:
             raise ValueError(f"Region {self.name!r} needs a layer with min_depth 0")
 
     def pick(self, depth: float, rng: Random) -> str:
+        """
+        Choose a tile from this region.
+        :param depth: depth value of tile in region
+        :param rng: seed
+        :return: a chose tile
+        """
         for layer in self.layers:
             if depth >= layer.min_depth:
                 names, weights = zip(*layer.tiles.items())
