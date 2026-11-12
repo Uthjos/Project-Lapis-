@@ -23,6 +23,13 @@ class AnimationPart(Enum):
     FRONT_PAULDRON = "front_pauldron"
     BACK_PAULDRON = "back_pauldron"
 
+    # these are for when we want to display another sprite with
+    # a smear frame or something
+    ACTION_PART1 = "action_part1"
+    ACTION_PART2 = "action_part2"
+    ACTION_PART3 = "action_part3"
+    ACTION_PART4 = "action_part4"
+
 
 class Action(Enum):
     WALK = "walk"
@@ -91,22 +98,17 @@ class PygameProp:
 
 
 
-
 @dataclass
 class SpriteData(PygameProp):
     """the Individual sprites that are the different parts on the character"""
     part: AnimationPart = AnimationPart.HEAD
-    file_location: str = ""
     props: PygameProp = field(default_factory=PygameProp)
 
     image = None
-    if file_location != "":
-        image = pygame.image.load(file_location)
 
     def to_dict(self):
         return {
             "part": self.part.value,
-            "file_location": self.file_location,
             "properties": self.props.to_dict(),
         }
 
@@ -114,9 +116,16 @@ class SpriteData(PygameProp):
     def from_dict(cls, d: dict):
         return cls(
             part=AnimationPart(d["part"]),
-            file_location=d["file_location"],
             props=PygameProp.from_dict(d.get("properties", {})),
         )
+
+    def set_image(
+            self,
+            direction: SpriteDirection,
+            ani_s: AnimationStack
+    ):
+
+        self.image = pygame.image.load(ani_s.file_location[direction.value][self.part])
 
 
 
@@ -155,16 +164,52 @@ class AnimationStack:
         }
     )
 
-    def add_frame(self, frame: Frame, action: Action, direction: SpriteDirection):
+    #Create dictionary to hold sprite images for direction
+    images: dict = field(
+        default_factory=lambda: {
+            direction: {part: ""
+                        for part in AnimationPart}
+            for direction in SpriteDirection
+        }
+    )
+
+    # holds file location
+    file_location: dict = field(
+        default_factory=lambda: {
+            direction: {part: {}
+                for part in AnimationPart}
+            for direction in SpriteDirection
+        }
+    )
+
+    def add_frame(
+            self,
+            frame: Frame,
+            action: Action,
+            direction: SpriteDirection
+    ):
         self.animations[direction][action].append(frame)
 
     def to_dict(self):
+
         return {
-            direction.value: {
-                action.value: [frame.to_dict() for frame in frames]
-                for action, frames in actions.items()
+
+
+            "animation": {
+                direction.value: {
+                    action.value: [frame.to_dict() for frame in frames]
+                    for action, frames in actions.items()
+                }
+                for direction, actions in self.animations.items()
+            },
+
+            "file_location": {
+                direction.value: {
+                    part.value: location
+                    for part, location in part.items
+                } for direction, part in self.file_location.items()
             }
-            for direction, actions in self.animations.items()
+
         }
 
     @classmethod
