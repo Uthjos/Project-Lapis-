@@ -1,7 +1,6 @@
 import os
 import sys
 from pathlib import Path
-from src.object_class.slime import Slime
 
 # Must be set before pygame is imported anywhere so no real window/audio opens.
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -31,6 +30,6 @@ def screen():
 @pytest.fixture
 def slime_assets(screen):
     """Slime sprite sheets loaded once into the class."""
-
+    from src.object_class.slime import Slime
     Slime.load_assets(SLIME_DIR)
     return Slime
