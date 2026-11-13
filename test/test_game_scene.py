@@ -270,7 +270,7 @@ def test_game_scene_starts_with_slimes_and_armed_player(scene):
     assert all(isinstance(e, Slime) for e in scene.enemies)
     assert isinstance(scene.player.equipped_item, Weapon)
     assert scene.frozen is False
-    assert scene.facing_right is True
+    assert scene.player.anim is not None  # Adventurer art loaded
 
 
 @pytest.mark.parametrize(
@@ -410,26 +410,28 @@ def test_update_moves_and_turns_player(scene, monkeypatch, pressed_key, dx, dy, 
     assert tuple(scene.player.facing) == facing
 
 
-def test_horizontal_movement_updates_sprite_direction(scene, monkeypatch):
+def test_movement_plays_run_animation_in_facing_direction(scene, monkeypatch):
     scene.enemies = []
+    animations = Character.animations
 
     press(monkeypatch, pygame.K_a)
     scene.update(16)
-    assert scene.facing_right is False
+    assert scene.player.anim.animation is animations["run", "left"]
 
+    press(monkeypatch, pygame.K_w)
+    scene.update(16)
+    assert scene.player.anim.animation is animations["run", "up"]
+
+
+def test_standing_still_plays_idle_animation(scene, monkeypatch):
+    scene.enemies = []
     press(monkeypatch, pygame.K_d)
     scene.update(16)
-    assert scene.facing_right is True
 
-
-def test_vertical_movement_keeps_sprite_direction(scene, monkeypatch):
-    scene.enemies = []
-    scene.facing_right = False
-    press(monkeypatch, pygame.K_w)
-
+    press(monkeypatch)
     scene.update(16)
 
-    assert scene.facing_right is False
+    assert scene.player.anim.animation is Character.animations["idle", "right"]
 
 
 def test_diagonal_input_moves_both_axes_and_faces_last_key_applied(scene, monkeypatch):

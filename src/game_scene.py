@@ -21,6 +21,7 @@ SPRITE_DIR = Path(__file__).resolve().parent / "assets" / "sprites"
 TILE_DIR = Path(__file__).resolve().parent / "assets" / "tiles"
 SLIME_DIR = SPRITE_DIR / "Crypt Slime" / "Sprite Sheets"
 SLIME_SPAWN_TILES = [(2, 6), (7, 5), (3, 5), (7, 7)]
+CHARACTER_DIR = SPRITE_DIR / "Adventurer"
 
 
 # Slash info will move to weapon
@@ -128,12 +129,9 @@ class GameScene(BaseScene):
         # Load assets.
         TILESET.load(load_environment_tile, TILE_SCALE)
         Slime.load_assets(SLIME_DIR)
+        Character.load_assets(CHARACTER_DIR)
         self.grid = IsoGrid(TILE_MAP, TILESET, *screen_size)
         self.background = self.grid.render(BACKGROUND_COLOR)
-        self.player_image = load_sprite("Sprite style 2.png")
-        self.slash_image = pygame.image.load(
-            str(ACTIONS_DIR / "test_slash_reference.png")
-        ).convert_alpha()
 
         # Player data.
         self.player = Character(screen_size[0] / 2, screen_size[1] / 2)  # center
@@ -145,7 +143,6 @@ class GameScene(BaseScene):
         self.pause_menu = PauseMenu()
         self.inventory_open = False
         self.pause_open = False
-        self.facing_right = True
 
         # Time spent in a menu, so enemy and weapon timers freeze while open.
         self.paused_ms = 0
@@ -177,8 +174,9 @@ class GameScene(BaseScene):
 
     def update(self, dt):
         if not self.frozen:
-            self._handle_movement()
+            moving = self._handle_movement()
             self._update_world()
+            self.player.update(moving, dt)
 
     def draw(self):
         screen = self.screen
@@ -187,7 +185,6 @@ class GameScene(BaseScene):
         for enemy in self.enemies:
             if enemy.is_alive():
                 draw_health_bar(screen, enemy)
-        draw_slash(screen, self.slash_image, self.player, self.now)
 
         if self.inventory_open:
             self.inventory_ui.draw(screen)
@@ -218,14 +215,15 @@ class GameScene(BaseScene):
 
     # ---------- update helpers
     def _handle_movement(self):
-        """Move and turn the player from the WASD keys."""
+        """Move and turn the player from the WASD keys. True if any key was held."""
         keys = pygame.key.get_pressed()
+        moving = False
         for key, (dx, dy) in MOVE_KEYS:
             if keys[key]:
                 self.player.move(dx * PLAYER_SPEED, dy * PLAYER_SPEED)
                 self.player.facing = (dx, dy)
-                if dx:
-                    self.facing_right = dx > 0
+                moving = True
+        return moving
 
     def _update_world(self):
         """Advance the player's attack and every enemy, then drop finished corpses."""
@@ -238,22 +236,12 @@ class GameScene(BaseScene):
     # ---------- draw helpers
     def _draw_characters(self):
         """Draw the player and enemies, sorted by feet position so lower is in front."""
-        screen, player = self.screen, self.player
-        sprite = (
-            self.player_image
-            if self.facing_right
-            else pygame.transform.flip(self.player_image, True, False)
-        )
-        # Each entry is (feet_y, draw_function, *arguments).
-        drawables = [
-            (player.movement_hitbox.bottom, screen.blit, sprite, (player.x, player.y))
-        ]
-        drawables += [(e.movement_hitbox.bottom, e.draw, screen) for e in self.enemies]
-        for _, draw, *args in sorted(drawables, key=lambda d: d[0]):
-            draw(*args)
-        pygame.draw.rect(screen, (255, 0, 0), player.movement_hitbox, width=2)
+        entities = [self.player, *self.enemies]
+        for entity in sorted(entities, key=lambda e: e.movement_hitbox.bottom):
+            entity.draw(self.screen)
 
     def _draw_debug_overlay(self):
+        pygame.draw.rect(self.screen, (255, 0, 0), self.player.movement_hitbox, width=2)
         for enemy in self.enemies:
             pygame.draw.rect(self.screen, (255, 255, 0), enemy.hurtbox, width=1)
         grid = self.grid
