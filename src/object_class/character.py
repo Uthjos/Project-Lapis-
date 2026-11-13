@@ -14,8 +14,9 @@ class Character(Entity):
     """Character class"""
 
     # ---- Adventurer sheets: 8 frames of 96x80 each, one sheet per direction.
-    FRAME_SIZE = (96, 80)
-    ANCHOR = (47, 58)  # ground point of a frame: between the adventurer's feet
+    FRAME_SIZE = (120, 100)
+    ANCHOR = (47, 58)  # ground point of an unscaled frame: between the adventurer's feet
+    SCALE = 1  # draw size multiplier; whole numbers keep the pixel art sharp
     # name -> (folder, ms per frame, loops?). Files are <folder>/<name>_<direction>.png
     SHEETS: ClassVar[dict[str, tuple[str, int, bool]]] = {
         "idle": ("IDLE", 120, True),
@@ -41,7 +42,7 @@ class Character(Entity):
         for name, (folder, frame_ms, loop) in cls.SHEETS.items():
             for direction in cls.DIRECTIONS.values():
                 path = sprite_dir / folder / f"{name}_{direction}.png"
-                frames = load_strip(path, *cls.FRAME_SIZE)
+                frames = load_strip(path, *cls.FRAME_SIZE, scale=cls.SCALE)
                 cls.animations[name, direction] = Animation(
                     frames, [frame_ms] * len(frames), loop
                 )
@@ -128,7 +129,7 @@ class Character(Entity):
         if self.anim is None:  # no art loaded: show the body box instead
             pygame.draw.rect(surface, (50, 120, 220), self.hurtbox, width=2)
             return
-        ax, ay = self.ANCHOR
+        ax, ay = self.ANCHOR[0] * self.SCALE, self.ANCHOR[1] * self.SCALE
         # Entity x, y is the top-left of its 32x32 body, so the feet are at (x + 16, y + 32).
         feet_x, feet_y = self.x + 16, self.y + 32
         surface.blit(self.anim.image, (round(feet_x - ax), round(feet_y - ay)))

@@ -20,7 +20,8 @@ def test_every_sheet_loads_eight_frames_per_direction(character_assets):
         for direction in Character.DIRECTIONS.values():
             animation = Character.animations[name, direction]
             assert len(animation.frames) == 8
-            assert animation.frames[0].get_size() == Character.FRAME_SIZE
+            w, h = Character.FRAME_SIZE
+            assert animation.frames[0].get_size() == (w * Character.SCALE, h * Character.SCALE)
 
 
 def test_character_without_assets_has_no_animation(monkeypatch):

@@ -3,13 +3,19 @@
 import pygame
 
 
-def load_strip(path, frame_w, frame_h):
-    """Slice a horizontal sprite strip into frames. Needs the display (convert_alpha)."""
+def load_strip(path, frame_w, frame_h, scale=1):
+    """Slice a horizontal sprite strip into frames. Needs the display (convert_alpha).
+
+    scale enlarges every frame with nearest-neighbour, so pixel art stays crisp.
+    """
     sheet = pygame.image.load(str(path)).convert_alpha()
-    return [
+    frames = [
         sheet.subsurface((i * frame_w, 0, frame_w, frame_h)).copy()
         for i in range(sheet.get_width() // frame_w)
     ]
+    if scale != 1:
+        frames = [pygame.transform.scale_by(frame, scale) for frame in frames]
+    return frames
 
 
 class Animation:
