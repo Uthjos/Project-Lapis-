@@ -4,6 +4,10 @@ from src.iso_math.tile_set import Tile
 
 
 class IsoGrid:
+    """Grid class for all game scenes
+    creates a grid of tiles and provides methods to render them.
+    Contains attributes about the tiles in the grid, such as height and width, walkability
+    """
     def __init__(self, tile_map, tileset, width, height, top_height=None):
         self.tile_map = tile_map
         self.tileset = tileset
@@ -23,16 +27,19 @@ class IsoGrid:
 
     # ---------- geometry (unchanged) ----------
     def tile_topleft(self, row, col):
+        """returns the top left corner of the tile"""
         return (
             self.origin_x + (col - row) * self.step_x,
             self.origin_y + (col + row) * self.step_y,
         )
 
     def tile_center(self, row, col):
+        """returns the center position of the tile"""
         x, y = self.tile_topleft(row, col)
         return x + self.tile_w / 2, y + self.top_h / 2
 
     def tile_diamond(self, row, col):
+        """returns the diamond position of the tile"""
         cx, cy = self.tile_center(row, col)
         return [
             (cx, cy - self.step_y),
@@ -43,6 +50,7 @@ class IsoGrid:
 
     # ---------- lookup ----------
     def tile_at(self, px, py):
+        """returns the tile at a particular position"""
         cx, cy = self.tile_center(0, 0)
         a = (px - cx) / self.step_x
         b = (py - cy) / self.step_y

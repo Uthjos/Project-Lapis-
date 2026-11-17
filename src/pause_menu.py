@@ -8,6 +8,7 @@ from src.ui import ui_helpers as ui
 
 
 class PauseAction(Enum):
+    """Options for pause menu buttons"""
     CONTINUE = auto()
     QUIT = auto()
 

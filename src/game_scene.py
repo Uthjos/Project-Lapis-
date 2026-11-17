@@ -4,6 +4,7 @@ import pygame
 
 from src.iso_math.iso_grid import IsoGrid
 from src.iso_math.tile_set import Tile, TileSet, TileType
+from src.map_gen import VoronoiMapGenerator
 from src.object_class.character import Character
 from src.object_class.slime import Slime
 from src.object_class.starting_items import give_starting_items
@@ -20,7 +21,8 @@ DEBUG_OVERLAY = False
 SPRITE_DIR = Path(__file__).resolve().parent / "assets" / "sprites"
 TILE_DIR = Path(__file__).resolve().parent / "assets" / "tiles"
 SLIME_DIR = SPRITE_DIR / "Crypt Slime" / "Sprite Sheets"
-SLIME_SPAWN_TILES = [(2, 6), (7, 5), (3, 5), (7, 7)]
+SLIME_COUNT = 4
+SLIME_MIN_DISTANCE = 4  # tiles (Manhattan) from the player spawn and from each other
 
 
 # Slash info will move to weapon
@@ -40,19 +42,10 @@ MOVE_KEYS = [
 BACKGROUND_COLOR = (0, 0, 0)
 TILE_SCALE = 3
 
-# Row 0 is the back of the map (top of the screen); each row's first column is on the left.
-TILE_MAP = [
-    [0, 1, 7, 6, 7, 1, 1, 10, 10, 0],
-    [1, 6, 7, 7, 8, 8, 1, 11, 1, 1],
-    [1, 1, 8, 7, 4, 8, 1, 11, 7, 1],
-    [1, 1, 8, 4, 4, 8, 1, 4, 6, 6],
-    [9, 1, 8, 8, 8, 8, 1, 4, 7, 1],
-    [9, 9, 1, 1, 8, 8, 1, 9, 7, 1],
-    [1, 9, 4, 6, 9, 8, 8, 1, 1, 1],
-    [9, 1, 4, 6, 1, 1, 8, 8, 1, 1],
-    [10, 1, 8, 8, 1, 8, 6, 9, 6, 6],
-    [0, 1, 1, 1, 1, 8, 1, 1, 6, 0],  # <-- Bottom-most tile
-]
+# Stage size in tiles. There is no camera yet, so the whole stage must fit on screen:
+# at TILE_SCALE 3 a 1280x720 window holds rows + cols <= 26 (12x12 is 1152x624 px).
+STAGE_ROWS = 12
+STAGE_COLS = 12
 
 TILESET = TileSet(
     {
@@ -67,6 +60,23 @@ TILESET = TileSet(
         Tile.LARGE_ROCK: TileType("large_rock", "Large_Rock_Tile.png", walkable=False),
     }
 )
+
+MAP_GENERATOR = VoronoiMapGenerator(Tile, TILESET)
+
+
+def generate_stage(seed=None):
+    """A new random stage. Pass a seed to rebuild the same one (e.g. for multiplayer)."""
+    return MAP_GENERATOR.generate(STAGE_ROWS, STAGE_COLS, seed=seed)
+
+
+def tile_position(grid, row, col):
+    """Entity x, y that puts its feet hitbox in the middle of tile (row, col).
+
+    An entity's feet box is 32x16 with its bottom-centre at (x + 16, y + 32),
+    so centring it on the tile centre (cx, cy) means x = cx - 16, y = cy - 24.
+    """
+    cx, cy = grid.tile_center(row, col)
+    return cx - 16, cy - 24
 
 
 def draw_slash(screen, slash_image, player, now):
@@ -91,12 +101,11 @@ def draw_health_bar(screen, entity):
     pygame.draw.rect(screen, (0, 0, 0), bar_rect, width=1)
 
 
-def generate_enemies(grid):
-    """One slime on each tile in SLIME_SPAWN_TILES."""
+def generate_enemies(grid, spawn_tiles):
+    """One slime on each (row, col) in spawn_tiles."""
     enemies_list = []
-    for row, col in SLIME_SPAWN_TILES:
-        cx, cy = grid.tile_center(row, col)
-        slime = Slime(cx - 16, cy - 24)
+    for row, col in spawn_tiles:
+        slime = Slime(*tile_position(grid, row, col))
         slime.set_collision_map(grid)
         enemies_list.append(slime)
     return enemies_list
@@ -121,14 +130,17 @@ class GameScene(BaseScene):
 
     FPS = FPS
 
-    def __init__(self, screen):
+    def __init__(self, screen, seed=None):
         super().__init__(screen)
         screen_size = screen.get_size()
 
         # Load assets.
         TILESET.load(load_environment_tile, TILE_SCALE)
         Slime.load_assets(SLIME_DIR)
-        self.grid = IsoGrid(TILE_MAP, TILESET, *screen_size)
+
+        # Build a fresh random stage. Row 0 is the back of the map (top of the screen).
+        self.stage = generate_stage(seed)
+        self.grid = IsoGrid(self.stage.tiles, TILESET, *screen_size)
         self.background = self.grid.render(BACKGROUND_COLOR)
         self.player_image = load_sprite("Sprite style 2.png")
         self.slash_image = pygame.image.load(
@@ -136,11 +148,14 @@ class GameScene(BaseScene):
         ).convert_alpha()
 
         # Player data.
-        self.player = Character(screen_size[0] / 2, screen_size[1] / 2)  # center
+        self.player = Character(*tile_position(self.grid, *self.stage.spawn))
         self.player.set_collision_map(self.grid)
         give_starting_items(self.player)
 
-        self.enemies = generate_enemies(self.grid)
+        slime_tiles = self.stage.pick_spawn_tiles(
+            SLIME_COUNT, rng=self.stage.seed, min_distance=SLIME_MIN_DISTANCE
+        )
+        self.enemies = generate_enemies(self.grid, slime_tiles)
         self.inventory_ui = InventoryUI(self.player.inventory, self.player)
         self.pause_menu = PauseMenu()
         self.inventory_open = False

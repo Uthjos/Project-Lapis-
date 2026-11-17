@@ -31,6 +31,5 @@ def screen():
 def slime_assets(screen):
     """Slime sprite sheets loaded once into the class."""
     from src.object_class.slime import Slime
-
     Slime.load_assets(SLIME_DIR)
     return Slime
