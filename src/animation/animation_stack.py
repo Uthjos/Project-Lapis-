@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 import pygame
+from pygame.math import Vector2
+from pygame.transform import scale
 
 from src.data_file_manage.directory_path import DirectoryPath as dp
 from src.data_file_manage.exporter_factory import ExporterFactory
@@ -65,13 +67,55 @@ class PygameProp:
     """PygameProp contains the pygame transformation data that is associated with
     each sprite associated with the individual parts
     """
-    x: float = 0
-    y: float = 0
-    scale: tuple = (1.0, 1.0)
-    rotation: float = 0
-    h_flip: bool = False
-    v_flip: bool = False
-    center: tuple = (0, 0)
+    def __init__(self, pivot=(0, 0), image=None):
+        self.x = 0
+        self.y = 0
+
+        self.rotation = 0
+        self.scale = (32, 32)
+
+        self.h_flip = False
+        self.v_flip = False
+
+        self.pivot = Vector2(pivot)             # The position of the pivot point
+
+        self.pos = Vector2(self.x, self.y)      # The position of the image
+
+        # Create the image based on the initiation or make a blank pygame surface
+        self.image_orig = image or pygame.Surface(self.scale, pygame.SRCALPHA)
+
+        # Copy of the image to keep image quality
+        self.image = self.image_orig.copy()
+
+        # Actual world position of the image center
+        self.center = self.pivot + self.pos
+
+        self.center_rect = self.image.get_rect(center=self.center)
+
+
+
+    def rotate_on_pivot(self):
+        surface = pygame.transform.rotate(
+            self.image,
+            self.rotation,
+        )
+
+        offset = self.pivot + self.pos.rotate(-self.rotation)
+
+        rect = surface.get_rect(center=offset)
+
+        return surface, rect
+
+
+    def update(self):
+        self.center = self.pivot + self.pos
+
+        self.image = self.image_orig.copy()
+
+        if self.h_flip or self.v_flip:
+            self.image = pygame.transform.flip(self.image, self.h_flip, self.v_flip)
+
+        self.image, self.center_rect = self.rotate_on_pivot()
 
     def to_dict(self):
         return {
@@ -81,20 +125,26 @@ class PygameProp:
             "rotation": self.rotation,
             "h_flip": self.h_flip,
             "v_flip": self.v_flip,
-            "center": tuple(self.center),
         }
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        return cls(
+
+    def from_dict(self, d: dict):
+
+        self.x = d["x"].value
+        self.y = d["y"].value
+        self.scale = d["scale"].value
+        self.rotation = d["rotation"].value
+        self.h_flip = d["h_flip"].value
+        self.v_flip = d["v_flip"].value
+
+        """return cls(
             x=d.get("x", 0),
             y=d.get("y", 0),
             scale=tuple(d.get("scale", (1, 1))),
             rotation=d.get("rotation", 0),
             h_flip=d.get("h_flip", False),
             v_flip=d.get("v_flip", False),
-            center=tuple(d.get("center", (0, 0))),
-        )
+        )"""
 
 
 
@@ -103,8 +153,6 @@ class SpriteData(PygameProp):
     """the Individual sprites that are the different parts on the character"""
     part: AnimationPart = AnimationPart.HEAD
     props: PygameProp = field(default_factory=PygameProp)
-
-    image = None
 
     def to_dict(self):
         return {
@@ -119,13 +167,7 @@ class SpriteData(PygameProp):
             props=PygameProp.from_dict(d.get("properties", {})),
         )
 
-    def set_image(
-            self,
-            direction: SpriteDirection,
-            ani_s: AnimationStack
-    ):
 
-        self.image = pygame.image.load(ani_s.file_location[direction.value][self.part])
 
 
 
@@ -189,6 +231,30 @@ class AnimationStack:
             direction: SpriteDirection
     ):
         self.animations[direction][action].append(frame)
+
+    def display_on_screen(
+            self,
+            screen: pygame.Surface,
+            frame_index: int,
+            direction: SpriteDirection,
+            action: Action
+    ):
+        sprite = self.animations[direction][action][frame_index]
+        for image in sprite.images:
+            rect_x = screen.width / 2
+            rect_y = screen.height / 2
+            # gets the center of the screen and adds animation positional data to it
+            center_rect = image.get_rect(
+                center = (
+                    rect_x + image.props.x,
+                    rect_y + image.props.y
+                )
+            )
+            screen.blit(image, sprite.center_rect)
+        # returns the wait time for the next frame
+        return sprite.props.time_to_next_frame
+
+
 
     def to_dict(self):
 
