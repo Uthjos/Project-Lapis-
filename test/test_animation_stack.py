@@ -302,7 +302,7 @@ def test_display_on_screen(test_image):
     )
 
     screen = pygame.Surface((192, 108))
-    screen = pygame.fill(0, 0, 0, 255)
+    screen.fill((0, 0, 0, 255))
 
     delay = stack.display_on_screen(
         screen,
