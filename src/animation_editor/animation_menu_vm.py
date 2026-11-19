@@ -154,7 +154,28 @@ class AnimationMenuVM:
         self._events.put((kind, payload))
 
 
-    """---- Action Core ----"""
+    """---- Indexing Core ----"""
+    def move_up_frame(self):
+        pass
+
+    def move_down_frame(self):
+        pass
+
+    def move_up_layer(self):
+        pass
+
+    def move_down_layer(self):
+        pass
+
+    def select_frame(self):
+        pass
+
+    def select_sprite_layer(self):
+        pass
+
+
+
+    """---- Transform Action Core ----"""
     def toggle_h_flip(self):
         pass
 
@@ -181,4 +202,5 @@ class AnimationMenuVM:
 
     def set_pivot_rotation(self, value):
         pass
+
 
