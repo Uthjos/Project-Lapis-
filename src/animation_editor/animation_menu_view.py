@@ -1,4 +1,6 @@
 import os
+import random
+import threading
 
 # Must be set before pygame starts, so no real pygame window ever opens.
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -30,7 +32,7 @@ def surface_to_photo(surf: pygame.Surface, zoom: int = ZOOM) -> ImageTk.PhotoIma
         )  # NEAREST keeps pixels crisp
     return ImageTk.PhotoImage(img)
 
-
+"""Need to test this eventually"""
 def export_gif(frames: list[pygame.Surface], duration_ms: list[int], path) -> None:
     """Write frames to an animated GIF. Durations come from each frame's time_to_next_frame."""
     imgs = [
@@ -48,8 +50,6 @@ def export_gif(frames: list[pygame.Surface], duration_ms: list[int], path) -> No
 
 
 """Renders pygame sprites by converting it to PIL immage then to tkinter image"""
-
-
 class SpriteView(pygame.sprite.Sprite):
     def __init__(self, image_path, position, scale=None):
         super().__init__()
@@ -68,35 +68,39 @@ class AnimationMenuView(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+
         self.title("Animation Editor")
         self.geometry("800x700")
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
+        # configure the grid layout (3x4) of main frame
+        for col in range(3): self.grid_columnconfigure(col, weight=1)
+        for row in range(4): self.grid_rowconfigure(row, weight=1)
+
         pygame.init()
         pygame.display.set_mode((1, 1))
+
         self.surface = pygame.Surface((WIDTH, HEIGHT))
         self.sprite_group = pygame.sprite.Group()
 
         self.dirty = True  # set True whenever the picture needs redraw
         self._photo = None
         self._after_id = None
+
+        # Create Action menu
         self.create_menu()
 
-        # Canvas insteadof label: it give mouse coordinates and allows overlays later
+        # Create editor sections
+        self.create_animation_frame()
+        self.create_frame_select_tab()
+        self.create_pygame_prop_frame()
 
-        self.display = tk.Canvas(
-            self,
-            width=WIDTH * ZOOM,
-            height=HEIGHT * ZOOM,
-            highlightthickness=0,
-            bg="white",
+        self._after_id = self.after(
+            FRAME_MS,
+            self.update_pygame_frame
         )
-        self.display.pack()
-        self._image_id = self.display.create_image(0, 0, anchor="nw")
 
-        self._after_id = self.after(FRAME_MS, self.update_pygame_frame)
-
-    # ---- menu ----
+    """Action Menu"""
     def create_menu(self):
         action_menu = tk.Menu(self)
 
@@ -115,6 +119,29 @@ class AnimationMenuView(ctk.CTk):
         if path:
             self.sprite_group.add(SpriteView(path, (WIDTH // 2, HEIGHT // 2)))
             self.mark_dirty()
+
+
+
+    """Animation Frame"""
+    def create_animation_frame(self):
+        animation_frame = ctk.CTkFrame(self, corner_radius=0)
+        animation_frame.grid(row=0, column=0, columnspan=2, rowspan=3, sticky="nsew")
+
+        # configure frame grid
+        animation_frame.grid_columnconfigure(0, weight=1)
+
+        # Pygame display canvas
+        self.display = ctk.CTkCanvas(
+            animation_frame,
+            width=WIDTH * ZOOM,
+            height=HEIGHT * ZOOM,
+            highlightthickness=0,
+            bg="white",
+        )
+
+        self.display.grid(row=0, column=0, sticky="nsew")
+
+        self._image_id = self.display.create_image(0, 0, anchor="nw", image=self._photo)
 
     # ---- rendering ----
     def mark_dirty(self):
@@ -140,6 +167,132 @@ class AnimationMenuView(ctk.CTk):
             self.display_frame()
             self.dirty = False
         self._after_id = self.after(FRAME_MS, self.update_pygame_frame)
+
+
+
+    """Frame Select Frame"""
+    # create tabview
+    def create_frame_select_tab(self):
+        tabview = ctk.CTkTabview(self, width=250)
+        tabview.grid(row=0, rowspan=2, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        tabview.add("Tab 1")
+        tabview.add("Tab 2")
+
+        tabview.tab("Tab 1").grid_columnconfigure(0, weight=1)
+        tabview.tab("Tab 1").grid_rowconfigure(0, weight=1)
+
+        tabview.tab("Tab 2").grid_columnconfigure(0, weight=1)
+
+        opt_1_scrollable_frame = ctk.CTkScrollableFrame(tabview.tab("Tab 1"), width=250)
+        opt_1_scrollable_frame.grid(row=0, column=0, pady=10, padx=10, sticky="nsew")
+        opt_1_scrollable_frame.grid_columnconfigure(0, weight=1)
+        for i in range(100):
+            frame_container_frame = ctk.CTkFrame(opt_1_scrollable_frame, width=250, fg_color="#505050")
+            frame_container_frame.grid(row=i, column=0, padx=5, pady=5, sticky="nsew")
+
+            # Up button
+            up_button = ctk.CTkButton(
+                frame_container_frame,
+                text="▲",
+                width=30,
+                height=25,
+                command=lambda: print("move up")
+            )
+            up_button.grid(row=0, column=0, padx=5, pady=2)
+
+            # Down button
+            down_button = ctk.CTkButton(
+                frame_container_frame,
+                text="▼",
+                width=30,
+                height=25,
+                command=lambda: print("move down")
+            )
+            down_button.grid(row=1, column=0, padx=5, pady=2)
+
+            frame_label = ctk.CTkLabel(frame_container_frame, text=f"Frame {i}")
+            frame_label.grid(row=0, column=1, padx=5, pady=2)
+
+            frame_label2 = ctk.CTkLabel(frame_container_frame, text=f"Original position Frame {i}")
+            frame_label2.grid(row=1, column=1, padx=5, pady=2)
+
+        opt_2_select_frame = ctk.CTkOptionMenu(tabview.tab("Tab 2"), dynamic_resizing=False,
+                                               values=["Option 1", "Option 2", "Option 3", "Option 4"])
+        opt_2_select_frame.grid(row=0, column=1, sticky="nsew")
+
+
+
+    """frame pygame prop frame"""
+    def create_pygame_prop_frame(self):
+        prop_frame = ctk.CTkScrollableFrame(self, width=250)
+        prop_frame.grid(row=2, rowspan=2, column=2, padx=(20, 0), pady=(20, 0), sticky="nsew")
+
+        prop_frame.grid_columnconfigure(0, weight=1)
+
+        prop_frame_props = []
+
+        for prop in range(5):
+            prop_container_frame = ctk.CTkFrame(prop_frame, fg_color='#505050')
+            prop_container_frame.grid(row=prop, column=0, padx=5, pady=5, sticky="nsew")
+
+            ranint = random.randint(1, 100)
+
+            # Create lable for property maybe should be an entry box as well
+            label = ctk.CTkLabel(prop_container_frame, text=f"CTkSlider {prop}", width=250)
+            label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+            entry = ctk.CTkEntry(prop_container_frame)
+            entry.grid(row=1, column=0, sticky="w")
+
+            # create switch or slider for property
+            slider = ctk.CTkSlider(
+                prop_container_frame,
+                from_=0,
+                to=100,
+                command=lambda value, e=entry: self.update_entry_from_slider(value, e)
+            )
+            slider.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+            # remove the scroll functionality of sliders so you can scroll down without messing up values
+            slider._canvas.unbind("<MouseWheel>")
+            slider._canvas.unbind("<Button-4>")
+            slider._canvas.unbind("<Button-5>")
+            slider._mouse_wheel_all = lambda event: None
+
+            slider.set(ranint)
+            entry.insert(0, str(ranint))
+            entry.bind(
+                "<Return>",
+                lambda event, s=slider, e=entry: self.update_slider_from_entry(s, e)
+            )
+
+            prop_frame_props.append(slider)
+
+    def update_entry_from_slider(self, value, entry):
+        """Updates the entry text wherever the slider moves."""
+        formatted_val = f"{round(value)}"
+        entry.delete(0, "end")
+        entry.insert(0, formatted_val)
+
+    def update_slider_from_entry(self, slider, entry, event=None):
+        """Updates the slider wherever the entry."""
+        min_val = slider.cget("from_")
+        max_val = slider.cget("to")
+
+        try:
+            val = float(entry.get())
+            # Clamp value within the slider's min/max bounds
+            val = max(min_val, min(val, max_val))
+
+            slider.set(val)
+
+            self.update_entry_from_slider(value=val, entry=entry)
+        except ValueError:
+            # revert entry text to current slider value if input isn't a number
+            self.update_entry_from_slider(slider.get(), entry)
+
+    """Thread handling"""
+    def handle_background_task(self, *args):
+        threading.Thread(target=self.update_slider_from_entry)
 
     def on_close(self):
         if self._after_id:
