@@ -1,11 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Optional
 
 import pygame
 from pygame.math import Vector2
-from pygame.transform import scale
 
 from src.data_file_manage.directory_path import DirectoryPath as dp
 from src.data_file_manage.exporter_factory import ExporterFactory
@@ -80,10 +77,8 @@ class PygameProp:
         default_factory=lambda: Vector2(0, 0)
     )  # The position of the pivot point
 
-    pos = Vector2(x, y)  # The position of the image
-
     # Create the image based on the initiation or make a blank pygame surface
-    image_orig: Optional[pygame.Surface] = field(
+    image_orig: pygame.Surface | None = field(
         default=None,
         repr=False,
         compare=False,
