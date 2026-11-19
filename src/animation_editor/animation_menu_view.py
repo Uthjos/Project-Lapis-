@@ -131,7 +131,7 @@ class AnimationMenuView(ctk.CTk):
         animation_frame.grid_columnconfigure(0, weight=1)
 
         # Pygame display canvas
-        self.display = ctk.CTkLabel(
+        self.display = ctk.CTkCanvas(
             animation_frame,
             width=WIDTH * ZOOM,
             height=HEIGHT * ZOOM,
