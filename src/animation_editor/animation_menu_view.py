@@ -131,7 +131,7 @@ class AnimationMenuView(ctk.CTk):
         animation_frame.grid_columnconfigure(0, weight=1)
 
         # Pygame display canvas
-        self.display = tk.Canvas(
+        self.display = ctk.CTkLabel(
             animation_frame,
             width=WIDTH * ZOOM,
             height=HEIGHT * ZOOM,
@@ -220,9 +220,6 @@ class AnimationMenuView(ctk.CTk):
                                                values=["Option 1", "Option 2", "Option 3", "Option 4"])
         opt_2_select_frame.grid(row=0, column=1, sticky="nsew")
 
-        for i in range(50):
-            item_list_frame = ctk.CTkFrame(self, width=250)
-
 
 
     """frame pygame prop frame"""
@@ -272,7 +269,7 @@ class AnimationMenuView(ctk.CTk):
 
     def update_entry_from_slider(self, value, entry):
         """Updates the entry text wherever the slider moves."""
-        formatted_val = f"{int(round(value))}"
+        formatted_val = f"{round(value)}"
         entry.delete(0, "end")
         entry.insert(0, formatted_val)
 
@@ -295,7 +292,7 @@ class AnimationMenuView(ctk.CTk):
 
     """Thread handling"""
     def handle_background_task(self, *args):
-        thread = threading.Thread(target=self.update_slider_from_entry)
+        threading.Thread(target=self.update_slider_from_entry)
 
     def on_close(self):
         if self._after_id:
