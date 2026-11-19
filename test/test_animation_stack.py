@@ -1,18 +1,16 @@
 
-import math
 
 import pygame
 import pytest
-
 from pygame.math import Vector2
 
 from src.animation.animation_stack import (
+    Action,
+    AnimationPart,
+    AnimationStack,
+    Frame,
     PygameProp,
     SpriteData,
-    Frame,
-    AnimationStack,
-    AnimationPart,
-    Action,
     SpriteDirection,
 )
 
@@ -113,6 +111,7 @@ def test_horizontal_flip(test_image):
     image, rect = prop.update()
 
     assert image.get_at((31, 0)) == (255, 0, 0, 255)
+    assert rect.size == (32, 32) # default rectangle size
 
 
 def test_vertical_flip(test_image):
@@ -127,6 +126,7 @@ def test_vertical_flip(test_image):
     image, rect = prop.update()
 
     assert image.get_at((0, 31)) == (255, 0, 0, 255)
+    assert rect.size == (32, 32) # default rectangle size
 
 
 # --------------------------------------------------
