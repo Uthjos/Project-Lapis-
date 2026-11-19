@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Optional
 
 import pygame
 from pygame.math import Vector2
@@ -64,58 +66,99 @@ class SpriteDirection(Enum):
 
 @dataclass
 class PygameProp:
-    """PygameProp contains the pygame transformation data that is associated with
-    each sprite associated with the individual parts
-    """
-    def __init__(self, pivot=(0, 0), image=None):
-        self.x = 0
-        self.y = 0
+    """Transformation and pivot information for an individual sprite."""
+    x: float = 0
+    y: float = 0
 
-        self.rotation = 0
-        self.scale = (32, 32)
+    rotation: float = 0
+    scale: tuple[int, int] = (32, 32)
 
-        self.h_flip = False
-        self.v_flip = False
+    h_flip: bool = False
+    v_flip: bool = False
 
-        self.pivot = Vector2(pivot)             # The position of the pivot point
+    pivot: Vector2 = field(
+        default_factory=lambda: Vector2(0, 0)
+    )  # The position of the pivot point
 
-        self.pos = Vector2(self.x, self.y)      # The position of the image
+    pos = Vector2(x, y)  # The position of the image
 
-        # Create the image based on the initiation or make a blank pygame surface
-        self.image_orig = image or pygame.Surface(self.scale, pygame.SRCALPHA)
+    # Create the image based on the initiation or make a blank pygame surface
+    image_orig: Optional[pygame.Surface] = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
 
-        # Copy of the image to keep image quality
-        self.image = self.image_orig.copy()
+    def __post_init__(self):
+        self.pivot = Vector2(self.pivot)
+        self.scale = tuple(self.scale)
 
-        # Actual world position of the image center
-        self.center = self.pivot + self.pos
+    @property
+    def pos(self) -> Vector2:
+        """Local offset from the pivot"""
+        return Vector2(self.x, self.y)
 
-        self.center_rect = self.image.get_rect(center=self.center)
+    @property
+    def center(self) -> Vector2:
+        """Unrotated image center."""
+        return self.pivot + self.pos
 
+    def transform_image(self, image=None):
+        """Apply scale, flip, flip and rotation to an image.
 
+        Returns: image, rect
+        """
+        # image from the direction when called and when you are
+        image = image if image is not None else self.image_orig
 
-    def rotate_on_pivot(self):
-        surface = pygame.transform.rotate(
-            self.image,
-            self.rotation,
-        )
+        if image is None:
+            return None, None
 
+        # Scale
+        if image.get_size != self.scale:
+            image = pygame.transform.scale(
+                image, self.scale
+            )
+
+        # Flip
+        if self.h_flip or self.v_flip:
+            image = pygame.transform.flip(image, self.h_flip, self.v_flip)
+
+        # Calculate the rotated image center
         offset = self.pivot + self.pos.rotate(-self.rotation)
 
-        rect = surface.get_rect(center=offset)
+        rect = image.get_rect(center=offset)
 
-        return surface, rect
+        return image, rect
 
+
+    def rotate_on_pivot(self, image=None):
+        """Rotate an image around the fixed pivot point."""
+        return self.transform_image(image)
 
     def update(self):
-        self.center = self.pivot + self.pos
+        return self.transform_image()
 
-        self.image = self.image_orig.copy()
+    def draw(self, surface, image=None, origin=None):
+        """Draw the transformed image.
 
-        if self.h_flip or self.v_flip:
-            self.image = pygame.transform.flip(self.image, self.h_flip, self.v_flip)
+        origin optionally overrides the world-space pivot.
+        """
 
-        self.image, self.center_rect = self.rotate_on_pivot()
+        if origin is not None:
+            old_pibot = self.pivot
+            self.pivot = Vector2(origin)
+
+            transformed, rect = self.transform_image(image)
+
+            self.pivot = old_pibot
+        else:
+            transformed, rect = self.transform_image(image)
+
+        if transformed is not None:
+            surface.blit(transformed, rect)
+
+        return rect
 
     def to_dict(self):
         return {
@@ -125,32 +168,29 @@ class PygameProp:
             "rotation": self.rotation,
             "h_flip": self.h_flip,
             "v_flip": self.v_flip,
+            "pivot": list(self.pivot)
         }
 
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Reconstruct transformation properties from JSON data"""
 
-    def from_dict(self, d: dict):
-
-        self.x = d["x"].value
-        self.y = d["y"].value
-        self.scale = d["scale"].value
-        self.rotation = d["rotation"].value
-        self.h_flip = d["h_flip"].value
-        self.v_flip = d["v_flip"].value
-
-        """return cls(
-            x=d.get("x", 0),
-            y=d.get("y", 0),
-            scale=tuple(d.get("scale", (1, 1))),
-            rotation=d.get("rotation", 0),
-            h_flip=d.get("h_flip", False),
-            v_flip=d.get("v_flip", False),
-        )"""
+        return cls(
+            x=data.get("x", 0),
+            y=data.get("y", 0),
+            scale=tuple(data.get("scale", (32, 32))),
+            rotation=data.get("rotation", 0),
+            h_flip=data.get("h_flip", False),
+            v_flip=data.get("v_flip", False),
+            pivot=Vector2(data.get("pivot", (0, 0))),
+        )
 
 
 
 @dataclass
 class SpriteData(PygameProp):
-    """the Individual sprites that are the different parts on the character"""
+    """the Individual character sprite/body part"""
+
     part: AnimationPart = AnimationPart.HEAD
     props: PygameProp = field(default_factory=PygameProp)
 
@@ -174,7 +214,7 @@ class SpriteData(PygameProp):
 
 @dataclass
 class Frame(PygameProp):
-    """The whole picture where everything comes together for a single frame"""
+    """The whole picture where every part comes together for a single frame"""
     # layer order is based on where the sprite is on the sprite list
     sprites: list[SpriteData] = field(default_factory=list)
     time_to_next_frame: int = 100
@@ -186,10 +226,13 @@ class Frame(PygameProp):
         }
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def from_dict(cls, data: dict):
         return cls(
-            sprites=[SpriteData.from_dict(s) for s in d.get("sprites", [])],
-            time_to_next_frame=d.get("time_to_next_frame", 100),
+            sprites=[
+                SpriteData().from_dict(sprite)
+                for sprite in data.get("sprites", [])
+            ],
+            time_to_next_frame=data.get("time_to_next_frame", 100),
         )
 
 
@@ -201,7 +244,10 @@ class AnimationStack:
     # Every direction contains a dict of actions and actions contains list of frames
     animations: dict = field(
         default_factory=lambda: {
-            direction: {action: [] for action in Action}
+            direction: {
+                action: []
+                for action in Action
+            }
             for direction in SpriteDirection
         }
     )
@@ -209,8 +255,10 @@ class AnimationStack:
     #Create dictionary to hold sprite images for direction
     images: dict = field(
         default_factory=lambda: {
-            direction: {part: ""
-                        for part in AnimationPart}
+            direction: {
+                part: None
+                for part in AnimationPart
+            }
             for direction in SpriteDirection
         }
     )
@@ -218,8 +266,10 @@ class AnimationStack:
     # holds file location
     file_location: dict = field(
         default_factory=lambda: {
-            direction: {part: {}
-                for part in AnimationPart}
+            direction: {
+                part: None
+                for part in AnimationPart
+            }
             for direction in SpriteDirection
         }
     )
@@ -232,6 +282,14 @@ class AnimationStack:
     ):
         self.animations[direction][action].append(frame)
 
+    def add_image(
+            self,
+            image: pygame.Surface,
+            part: AnimationPart,
+            direction:SpriteDirection
+    ):
+        self.images[direction][part] = image
+
     def display_on_screen(
             self,
             screen: pygame.Surface,
@@ -239,31 +297,41 @@ class AnimationStack:
             direction: SpriteDirection,
             action: Action
     ):
-        sprite = self.animations[direction][action][frame_index]
-        for image in sprite.images:
-            rect_x = screen.width / 2
-            rect_y = screen.height / 2
-            # gets the center of the screen and adds animation positional data to it
-            center_rect = image.get_rect(
-                center = (
-                    rect_x + image.props.x,
-                    rect_y + image.props.y
-                )
+        frames = self.animations[direction][action]
+
+        if not 0 <= frame_index < len(frames):
+            raise IndexError("Animation frame index out of range")
+
+        frame = frames[frame_index]
+
+        # Character's base reference point
+        origin =Vector2(screen.get_rect().center)
+
+        for sprite in frame.sprites:
+
+            image = self.images[direction].get(sprite.part)
+
+            if image is not None:
+                continue
+
+            sprite.props.draw(
+                screen,
+                image=image,
+                origin=origin + sprite.props.pivot
             )
-            screen.blit(image, sprite.center_rect)
-        # returns the wait time for the next frame
-        return sprite.props.time_to_next_frame
+        # return the time to next frame for game model or ui to handle it
+        return frame.time_to_next_frame
 
 
 
     def to_dict(self):
-
         return {
-
-
             "animation": {
                 direction.value: {
-                    action.value: [frame.to_dict() for frame in frames]
+                    action.value: [
+                        frame.to_dict()
+                        for frame in frames
+                    ]
                     for action, frames in actions.items()
                 }
                 for direction, actions in self.animations.items()
@@ -272,8 +340,9 @@ class AnimationStack:
             "file_location": {
                 direction.value: {
                     part.value: location
-                    for part, location in part.items
-                } for direction, part in self.file_location.items()
+                    for part, location in part.items()
+                }
+                for direction, part in self.file_location.items()
             }
 
         }
@@ -281,15 +350,41 @@ class AnimationStack:
     @classmethod
     def from_dict(cls, data: dict):
         stack = cls()
+
+        animation_data = data.get("animation", data)
+
         for direction in SpriteDirection:
+            direction_data = animation_data.get(
+                 direction.value, {}
+            )
+
             for action in Action:
-                raw = data.get(direction.value, {}).get(action.value, [])
-                stack.animations[direction][action] = [Frame.from_dict(f) for f in raw]
+                raw_frames = direction_data.get(
+                    action.value,[]
+                )
+
+                stack.animations[direction][action] = [
+                    Frame.from_dict(frame)
+                    for frame in raw_frames
+                ]
+
+            locations = data.get(
+                "file_location", {}
+            ).get(direction.value, {})
+
+            for part in AnimationPart:
+                stack.file_location[direction][part] = (
+                    locations.get(part.value)
+                )
+
         return stack
 
     def load_animations(self, filename: str):
         data = ParserFactory.create_parser("json").parse_file(filename)
-        self.animations = AnimationStack.from_dict(data).animations
+        loaded_animation = AnimationStack.from_dict(data)
+
+        self.animations = loaded_animation.animations
+        self.file_location = loaded_animation.file_location
 
     def export_to_json(self, name: str):
         path = dp.get_dir(dp.ANIMATION) / f"{name}.json"
